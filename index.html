@@ -478,11 +478,11 @@
     <!-- Reset Modal -->
     <div class="modal-overlay" id="resetModal">
         <div class="modal">
-            <h3>确认重置</h3>
-            <p>重置后当前连续天数将归零。<br>确定要重置吗？</p>
+            <h3>清除所有数据</h3>
+            <p>将删除全部打卡记录和统计数据。<br>此操作不可恢复，确定继续吗？</p>
             <div class="btn-group">
                 <button class="btn-cancel" onclick="hideResetModal()">取消</button>
-                <button class="btn-confirm" onclick="resetStreak()">确认重置</button>
+                <button class="btn-confirm" onclick="resetAllData()">确认清除</button>
             </div>
         </div>
     </div>
@@ -903,10 +903,10 @@
             showToast('打卡成功！坚持就是胜利！');
         }
 
-        function resetStreak() {
-            data.currentStreak = 0;
+        function resetAllData() {
+            data = { checkins: {}, currentStreak: 0, bestStreak: 0, totalDays: 0, lastCheckinDate: null };
             saveLocalData(data); hideResetModal(); updateUI(); syncAfterChange();
-            showToast('已重置，重新开始吧！');
+            showToast('所有数据已清除');
         }
         function showResetModal() { document.getElementById('resetModal').classList.add('active'); }
         function hideResetModal() { document.getElementById('resetModal').classList.remove('active'); }
@@ -1024,8 +1024,14 @@
         document.getElementById('tokenModal').addEventListener('click', function(e) { if (e.target === this) hideTokenModal(); });
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { hideResetModal(); hideTokenModal(); } });
 
-        // Init
-        syncOnLoad().then(() => updateUI());
+        // Init — always recalc streak from actual data on load
+        function recalcStats() {
+            data.currentStreak = calcStreakFrom(data.checkins);
+            data.totalDays = Object.keys(data.checkins).length;
+            if (data.currentStreak > data.bestStreak) data.bestStreak = data.currentStreak;
+        }
+        recalcStats();
+        syncOnLoad().then(() => { recalcStats(); updateUI(); });
         if (!getToken()) updateUI();
     </script>
 </body>
