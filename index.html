@@ -222,23 +222,25 @@
         .day-cell.future { color:var(--future-text); }
         .day-cell:not(.future):not(.checked):hover { background:var(--card-hover); }
 
-        /* Heatmap */
-        .heatmap-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; transition:all var(--transition); box-shadow:var(--shadow); overflow-x:auto; }
+        /* Heatmap – horizontal GitHub-style */
+        .heatmap-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; transition:all var(--transition); box-shadow:var(--shadow); overflow-x:auto; }
         .heatmap-card:hover { border-color:var(--border-glow); }
         .heatmap-title { font-size:12px; color:var(--text-muted); letter-spacing:2px; margin-bottom:10px; text-align:center; }
-        .heatmap-wrap { display:flex; gap:2px; min-width:fit-content; }
-        .heatmap-weeks { display:flex; flex-direction:column; gap:2px; }
-        .heatmap-week { display:flex; gap:2px; }
-        .heatmap-cell { width:12px; height:12px; border-radius:2px; background:var(--heatmap-empty); transition:all 0.2s; cursor:default; position:relative; flex-shrink:0; }
+        .heatmap-table { display:flex; flex-direction:column; gap:2px; min-width:fit-content; }
+        .heatmap-month-row { display:flex; gap:2px; padding-left:22px; }
+        .heatmap-month-label { width:12px; flex-shrink:0; font-size:9px; color:var(--text-muted); line-height:1; }
+        .heatmap-month-label.has-text { width:auto; }
+        .heatmap-row { display:flex; gap:2px; align-items:center; }
+        .heatmap-day-label { width:20px; flex-shrink:0; font-size:9px; color:var(--text-muted); text-align:right; padding-right:2px; line-height:1; }
+        .heatmap-cell { width:12px; height:12px; border-radius:2px; background:var(--heatmap-empty); transition:all 0.15s; cursor:default; flex-shrink:0; }
+        .heatmap-cell.empty { visibility:hidden; }
         .heatmap-cell.l1 { background:var(--heatmap-l1); }
         .heatmap-cell.l2 { background:var(--heatmap-l2); }
         .heatmap-cell.l3 { background:var(--heatmap-l3); }
         .heatmap-cell.l4 { background:var(--heatmap-l4); }
-        .heatmap-cell.future-cell { opacity:0.3; }
-        .heatmap-cell:hover { transform:scale(1.6); z-index:2; }
-        .heatmap-labels { display:flex; gap:2px; padding-left:4px; font-size:9px; color:var(--text-muted); margin-bottom:4px; flex-wrap:wrap; }
-        .heatmap-labels span { min-width:40px; text-align:center; }
-        .heatmap-legend { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text-muted); margin-top:8px; justify-content:center; }
+        .heatmap-cell.future-cell { opacity:0.25; }
+        .heatmap-cell:not(.empty):hover { transform:scale(1.8); z-index:2; outline:1.5px solid var(--text-muted); outline-offset:-1px; }
+        .heatmap-legend { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text-muted); margin-top:10px; justify-content:center; }
         .heatmap-legend .swatch { width:10px; height:10px; border-radius:2px; }
         .heatmap-tooltip { position:fixed; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:11px; color:var(--text); box-shadow:var(--shadow-lg); pointer-events:none; z-index:50; white-space:nowrap; opacity:0; transition:opacity 0.15s; }
 
@@ -446,8 +448,7 @@
         <!-- Heatmap -->
         <div class="heatmap-card">
             <div class="heatmap-title">📅 年度打卡热力图</div>
-            <div class="heatmap-labels" id="heatmapLabels"></div>
-            <div class="heatmap-wrap" id="heatmapWrap"></div>
+            <div class="heatmap-table" id="heatmapTable"></div>
             <div class="heatmap-legend">
                 <span>少</span>
                 <span class="swatch" style="background:var(--heatmap-empty)"></span>
@@ -472,8 +473,9 @@
             </div>
         </div>
 
-        <div class="btn-group" style="max-width:300px;margin:0 auto;">
+        <div class="btn-group" style="max-width:400px;margin:0 auto;">
             <button class="btn btn-cancel" onclick="showYearReport()" style="flex:1;border:1px solid var(--border);background:transparent;color:var(--accent);">📊 年度报告</button>
+            <button class="btn btn-cancel" onclick="showDevModal()" style="flex:0.4;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:11px;">🔧 开发</button>
         </div>
     </div>
 
@@ -535,6 +537,62 @@
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <!-- Dev Modal -->
+    <div class="modal-overlay" id="devModal">
+        <div class="modal" style="max-width:580px;text-align:left;max-height:85vh;overflow-y:auto;">
+            <h3 style="text-align:center;">🔧 开发者选项</h3>
+
+            <!-- Section: Habits -->
+            <div style="margin-bottom:18px;border:1px solid var(--border);border-radius:10px;padding:14px;">
+                <div style="font-size:12px;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px;">📋 习惯管理</div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">
+                    <select id="devHabitSelect" onchange="devOnHabitChange()" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text);font-size:12px;font-family:inherit;outline:none;"></select>
+                    <button class="btn-cancel" onclick="devEditHabit()" style="flex:0;padding:8px 10px;font-size:11px;">✏️</button>
+                    <button class="btn-cancel" onclick="devDeleteHabit()" style="flex:0;padding:8px 10px;font-size:11px;color:var(--danger);">🗑</button>
+                </div>
+                <div id="devHabitEditor" style="display:none;">
+                    <input id="devHabitName" placeholder="名称" maxlength="12" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg-secondary);color:var(--text);font-size:12px;font-family:inherit;margin-bottom:8px;outline:none;">
+                    <div id="devEmojiGrid" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;"></div>
+                    <div id="devColorGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+                    <button class="btn-cancel" onclick="devSaveHabit()" style="width:100%;padding:7px;font-size:12px;color:var(--success);">💾 保存习惯</button>
+                </div>
+            </div>
+
+            <!-- Section: Checkins -->
+            <div style="margin-bottom:18px;border:1px solid var(--border);border-radius:10px;padding:14px;">
+                <div style="font-size:12px;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px;">📅 打卡记录管理</div>
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <input type="date" id="devCheckinDate" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg-secondary);color:var(--text);font-size:12px;font-family:inherit;outline:none;">
+                    <input type="time" id="devCheckinTime" value="12:00" style="width:90px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg-secondary);color:var(--text);font-size:12px;font-family:inherit;outline:none;">
+                </div>
+                <input type="text" id="devCheckinNote" placeholder="备注（可选）" maxlength="100" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg-secondary);color:var(--text);font-size:12px;font-family:inherit;margin-bottom:8px;outline:none;">
+                <div style="display:flex;gap:6px;">
+                    <button class="btn-cancel" onclick="devAddCheckin()" style="flex:1;padding:7px;font-size:12px;color:var(--success);">➕ 添加打卡</button>
+                    <button class="btn-cancel" onclick="devRemoveCheckin()" style="flex:1;padding:7px;font-size:12px;color:var(--danger);">➖ 删除打卡</button>
+                    <button class="btn-cancel" onclick="devBatchAdd()" style="flex:1.3;padding:7px;font-size:11px;">📆 批量填充</button>
+                </div>
+                <div id="devBatchInfo" style="font-size:10px;color:var(--text-muted);margin-top:6px;"></div>
+                <div style="margin-top:8px;font-size:11px;color:var(--text-muted);">
+                    当前打卡 <b id="devCheckinCount" style="color:var(--text-secondary);">0</b> 天
+                </div>
+            </div>
+
+            <!-- Sync -->
+            <div style="margin-bottom:14px;border:1px solid var(--border);border-radius:10px;padding:14px;">
+                <div style="font-size:12px;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px;">☁️ 云端同步</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">远程 SHA: <span id="devSha" style="font-family:monospace;color:var(--text-secondary);">--</span></div>
+                <div id="devError" style="color:var(--danger);font-size:11px;margin-bottom:8px;min-height:16px;"></div>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn-cancel" onclick="devPull()" style="flex:1;padding:7px;font-size:12px;">📥 从云端覆盖本地</button>
+                    <button class="btn-cancel" onclick="devPush()" style="flex:1;padding:7px;font-size:12px;color:var(--success);">🚀 推送到云端</button>
+                </div>
+                <div id="devSyncNote" style="font-size:10px;color:var(--text-muted);margin-top:6px;"></div>
+            </div>
+
+            <button class="btn-cancel" onclick="hideDevModal()" style="width:100%;margin-top:4px;">关闭</button>
+        </div>
+    </div>
 
     <script>
         // ==================== Config ====================
@@ -699,6 +757,7 @@
         function saveLocalData(obj){localStorage.setItem(STORAGE_KEY,JSON.stringify(obj));}
 
         let data=loadLocalData();
+        let syncAbort=false;
         let calendarYear=new Date().getFullYear(),calendarMonth=new Date().getMonth()+1;
 
         function activeHabit(){
@@ -711,10 +770,12 @@
         async function syncOnLoad(){
             const token=getToken();if(!token){updateSyncBadge('no_token');return;}
             const remote=await fetchRemoteData();
+            if(syncAbort)return;
             if(!remote){updateSyncBadge('error');return;}
             if(remote._notFound){updateSyncBadge('synced');return;}
             delete remote._sha;
             data=migrateOldData(remote);
+            if(syncAbort)return;
             saveLocalData(data);updateUI();updateSyncBadge('synced');
         }
         async function syncAfterChange(){
@@ -897,12 +958,18 @@
         }
 
         async function resetAllData(){
-            data={habits:[{id:'default',name:'自律打卡',icon:'💪',color:'#7c6ff7',createdAt:new Date().toISOString(),checkins:{},bestStreak:0}],activeHabitId:'default'};
-            saveLocalData(data);hideResetModal();updateUI();
+            syncAbort=true;
+            localStorage.setItem(STORAGE_KEY,JSON.stringify({habits:[{id:'default',name:'自律打卡',icon:'💪',color:'#7c6ff7',createdAt:new Date().toISOString(),checkins:{},bestStreak:0}],activeHabitId:'default'}));
+            hideResetModal();
+            showToast('所有数据已清除，刷新中…');
             const token=getToken();
-            if(token){const remote=await fetchRemoteData();const payload=prepareSyncPayload(data);if(remote&&!remote._notFound)payload._sha=remote._sha;const r=await pushRemoteData(payload);updateSyncBadge(r.ok?'synced':'error');}
-            else updateSyncBadge('no_token');
-            showToast('所有数据已清除');
+            if(token){
+                const remote=await fetchRemoteData();
+                const emptyPayload={habits:[{id:'default',name:'自律打卡',icon:'💪',color:'#7c6ff7',createdAt:new Date().toISOString(),checkins:{},bestStreak:0}],activeHabitId:'default'};
+                if(remote&&!remote._notFound)emptyPayload._sha=remote._sha;
+                await pushRemoteData(emptyPayload);
+            }
+            setTimeout(()=>location.reload(),500);
         }
         function showResetModal(){document.getElementById('resetModal').classList.add('active');}
         function hideResetModal(){document.getElementById('resetModal').classList.remove('active');}
@@ -985,64 +1052,90 @@
             strip.innerHTML=html;
         }
 
-        // ==================== Heatmap ====================
+        // ==================== Heatmap (GitHub-style ====================
         function renderHeatmap(){
             const checkins=activeCheckins(),now=new Date();
-            const yearStart=new Date(now.getFullYear(),0,1);
-            const yearEnd=new Date(now.getFullYear(),11,31);
-            const firstDay=yearStart.getDay();
+            const year=now.getFullYear();
+            const jan1=new Date(year,0,1);
+            const jan1Day=jan1.getDay(); // 0=Sun
+            const isLeap=(year%4===0&&year%100!==0)||(year%400===0);
+            const totalDays=isLeap?366:365;
+            const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
 
-            // Month labels
-            const months=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-            let labelHtml='';
-            // Calculate week positions for month labels
+            // weeks needed
+            const totalWeeks=Math.ceil((jan1Day+totalDays)/7);
+
+            // Build grid[7 rows][totalWeeks cols] – null where no day belongs
+            const grid=Array.from({length:7},()=>Array(totalWeeks).fill(null));
+            for(let d=0;d<totalDays;d++){
+                const date=new Date(year,0,1+d);
+                const dow=date.getDay(); // 0=Sun
+                const week=Math.floor((d+jan1Day)/7);
+                const k=dateKey(date.getFullYear(),date.getMonth()+1,date.getDate());
+                grid[dow][week]={
+                    key:k,
+                    date:date,
+                    checked:!!checkins[k],
+                    future:date>today,
+                    note:getNote(k),
+                    time:getCheckinTime(k),
+                };
+            }
+
+            // Which week does each month start?
+            const months=[];
             for(let m=0;m<12;m++){
-                const monthStart=new Date(now.getFullYear(),m,1);
-                const weekNum=Math.floor((monthStart-yearStart+firstDay*86400000)/(86400000*7));
-                labelHtml+=`<span style="flex:${m<11?weekWidth(m,now.getFullYear(),firstDay):'1'};text-align:left;">${months[m]}</span>`;
+                const ms=new Date(year,m,1);
+                const doy=Math.floor((ms-jan1)/86400000);
+                months.push({label:(m+1)+'月',week:Math.floor((doy+jan1Day)/7)});
             }
-            document.getElementById('heatmapLabels').innerHTML=months.map((lbl,i)=>{
-                const d=new Date(now.getFullYear(),i,1);
-                const daysSinceStart=Math.floor((d-yearStart)/(86400000));
-                const dayOfWeek=d.getDay();
-                const weekNum=Math.floor((daysSinceStart+firstDay)/7);
-                return `<span>${lbl}</span>`;
-            }).join('');
+            // Merge consecutive months that share the same week label into e.g. "1-2月"
+            const mergedMonths=[];
+            for(let i=0;i<months.length;i++){
+                if(i>0&&months[i].week===months[i-1].week){
+                    // extend previous
+                    mergedMonths[mergedMonths.length-1].label=mergedMonths[mergedMonths.length-1].label.replace(/\d+月$/,'')+months[i].label;
+                }else{
+                    mergedMonths.push({...months[i]});
+                }
+            }
 
-            const wrap=document.getElementById('heatmapWrap');
-            let html='<div class="heatmap-weeks">';
-            let dayCount=0,weekHtml='';
-            // Fill in days before year start
-            for(let d=0;d<firstDay;d++)weekHtml+='<div class="heatmap-cell" style="visibility:hidden"></div>';
-            dayCount=firstDay;
-            const today=new Date(),todayK=todayKey();
-            for(let d=new Date(yearStart);d<=yearEnd;d.setDate(d.getDate()+1)){
-                const k=dateKey(d.getFullYear(),d.getMonth()+1,d.getDate());
-                const checked=checkins[k],isFuture=d>today;
-                let cls='heatmap-cell';
-                if(isFuture)cls+=' future-cell';
-                else if(checked)cls+=' l4';
-                const note=getNote(k),time=getCheckinTime(k);
-                const tip=checked?`${k} 已打卡${time?' '+time:''}${note?' '+note:''}`:k;
-                weekHtml+=`<div class="${cls}" data-tip="${tip}"></div>`;
-                dayCount++;
-                if(dayCount>=7){html+='<div class="heatmap-week">'+weekHtml+'</div>';weekHtml='';dayCount=0;}
+            const dayNames=['日','一','二','三','四','五','六'];
+            let html='<div class="heatmap-table">';
+
+            // Month label row
+            html+='<div class="heatmap-month-row">';
+            for(let w=0;w<totalWeeks;w++){
+                const mm=mergedMonths.find(m=>m.week===w);
+                html+=`<span class="heatmap-month-label${mm?' has-text':''}">${mm?mm.label:''}</span>`;
             }
-            if(dayCount>0){while(dayCount<7){weekHtml+='<div class="heatmap-cell" style="visibility:hidden"></div>';dayCount++;}html+='<div class="heatmap-week">'+weekHtml+'</div>';}
             html+='</div>';
-            wrap.innerHTML=html;
+
+            // 7 day rows
+            for(let dow=0;dow<7;dow++){
+                html+='<div class="heatmap-row">';
+                html+=`<span class="heatmap-day-label">${dayNames[dow]}</span>`;
+                for(let w=0;w<totalWeeks;w++){
+                    const cell=grid[dow][w];
+                    if(!cell){html+='<span class="heatmap-cell empty"></span>';continue;}
+                    let cls='heatmap-cell';
+                    if(cell.future)cls+=' future-cell';
+                    else if(cell.checked)cls+=' l4';
+                    const tip=cell.checked?`${cell.key} 已打卡${cell.time?' '+cell.time:''}${cell.note?' '+cell.note:''}`:cell.key;
+                    html+=`<span class="${cls}" data-tip="${tip}"></span>`;
+                }
+                html+='</div>';
+            }
+            html+='</div>';
+            document.getElementById('heatmapTable').innerHTML=html;
 
             // Tooltip
             const tooltip=document.getElementById('heatmapTooltip');
-            wrap.querySelectorAll('.heatmap-cell[data-tip]').forEach(cell=>{
+            document.querySelectorAll('#heatmapTable .heatmap-cell[data-tip]').forEach(cell=>{
                 cell.addEventListener('mouseenter',e=>{tooltip.textContent=cell.dataset.tip;tooltip.style.opacity='1';});
                 cell.addEventListener('mousemove',e=>{tooltip.style.left=e.clientX+12+'px';tooltip.style.top=e.clientY-30+'px';});
                 cell.addEventListener('mouseleave',()=>{tooltip.style.opacity='0';});
             });
-        }
-        function weekWidth(month,fullYear,firstDay){
-            // Not used, simplified
-            return 1;
         }
 
         // ==================== Time Distribution ====================
@@ -1197,16 +1290,221 @@
             });
         }
 
+        // ==================== Developer Tools ====================
+        let devEditingHabitId=null;
+
+        function showDevModal(){
+            document.getElementById('devModal').classList.add('active');
+            devRefreshHabitList();
+            devOnHabitChange();
+            devRefreshSha();
+        }
+        function hideDevModal(){
+            document.getElementById('devModal').classList.remove('active');
+            devEditingHabitId=null;
+            document.getElementById('devHabitEditor').style.display='none';
+        }
+
+        async function devRefreshSha(){
+            document.getElementById('devSha').textContent='查询中…';
+            const token=getToken();
+            if(!token){document.getElementById('devSha').textContent='未设置 Token';return;}
+            try{
+                const resp=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,{headers:apiHeaders(),cache:'no-store'});
+                if(resp.status===404){document.getElementById('devSha').textContent='(远程文件不存在)';return;}
+                if(!resp.ok){document.getElementById('devSha').textContent='--';return;}
+                const j=await resp.json();
+                document.getElementById('devSha').textContent=j.sha.slice(0,12)+'…';
+            }catch(e){document.getElementById('devSha').textContent='--';}
+        }
+
+        function devRefreshHabitList(){
+            const sel=document.getElementById('devHabitSelect');
+            sel.innerHTML=data.habits.map(h=>`<option value="${h.id}">${h.icon} ${h.name}（${Object.keys(h.checkins).length}天）</option>`).join('');
+            if(data.activeHabitId&&data.habits.find(h=>h.id===data.activeHabitId))sel.value=data.activeHabitId;
+            devEditingHabitId=null;
+            document.getElementById('devHabitEditor').style.display='none';
+        }
+
+        function devSelectedHabit(){
+            return data.habits.find(h=>h.id===document.getElementById('devHabitSelect').value);
+        }
+
+        function devOnHabitChange(){
+            const h=devSelectedHabit();
+            if(!h)return;
+            const cnt=Object.keys(h.checkins).length;
+            document.getElementById('devCheckinCount').textContent=cnt;
+            document.getElementById('devCheckinDate').value=todayKey();
+            document.getElementById('devCheckinTime').value='12:00';
+            document.getElementById('devCheckinNote').value='';
+            document.getElementById('devBatchInfo').textContent='';
+            document.getElementById('devError').textContent='';
+        }
+
+        function devEditHabit(){
+            const h=devSelectedHabit();if(!h)return;
+            devEditingHabitId=h.id;
+            document.getElementById('devHabitEditor').style.display='block';
+            document.getElementById('devHabitName').value=h.name;
+            // Emoji grid
+            let eh='';
+            for(const e of HABIT_EMOJIS)eh+=`<button class="emoji-opt${e===h.icon?' selected':''}" onclick="document.querySelectorAll('#devEmojiGrid .emoji-opt').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');" style="font-size:18px;padding:4px;border-radius:6px;cursor:pointer;border:1px solid transparent;background:transparent;">${e}</button>`;
+            document.getElementById('devEmojiGrid').innerHTML=eh;
+            document.getElementById('devEmojiGrid').querySelector('.selected')||document.getElementById('devEmojiGrid').querySelector('button')?.classList.add('selected');
+            // Color grid
+            let ch='';
+            for(const c of HABIT_COLORS)ch+=`<div class="color-opt${c===h.color?' selected':''}" style="background:${c}" onclick="document.querySelectorAll('#devColorGrid .color-opt').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');"></div>`;
+            document.getElementById('devColorGrid').innerHTML=ch;
+            if(!document.getElementById('devColorGrid').querySelector('.selected'))document.getElementById('devColorGrid').querySelector('div')?.classList.add('selected');
+        }
+
+        function devSaveHabit(){
+            const h=data.habits.find(h=>h.id===devEditingHabitId);if(!h)return;
+            h.name=document.getElementById('devHabitName').value.trim()||h.name;
+            const selEmoji=document.getElementById('devEmojiGrid').querySelector('.selected');
+            if(selEmoji)h.icon=selEmoji.textContent;
+            const selColor=document.getElementById('devColorGrid').querySelector('.selected');
+            if(selColor)h.color=selColor.style.background;
+            saveLocalData(data);
+            devRefreshHabitList();
+            updateUI();
+            document.getElementById('devHabitEditor').style.display='none';
+            devEditingHabitId=null;
+            showToast('习惯已保存');
+        }
+
+        async function devDeleteHabit(){
+            if(data.habits.length<=1){showToast('至少保留一个习惯');return;}
+            const h=devSelectedHabit();if(!h)return;
+            if(!confirm(`确定删除习惯「${h.name}」及其 ${Object.keys(h.checkins).length} 条打卡记录？\n此操作不可恢复。`))return;
+            data.habits=data.habits.filter(x=>x.id!==h.id);
+            if(data.activeHabitId===h.id)data.activeHabitId=data.habits[0].id;
+            saveLocalData(data);
+            devRefreshHabitList();
+            devOnHabitChange();
+            updateUI();
+            showToast('习惯已删除');
+        }
+
+        function devGetSelectedEmoji(){
+            const el=document.getElementById('devEmojiGrid').querySelector('.selected');
+            return el?el.textContent:HABIT_EMOJIS[0];
+        }
+        function devGetSelectedColor(){
+            const el=document.getElementById('devColorGrid').querySelector('.selected');
+            return el?el.style.background:HABIT_COLORS[0];
+        }
+
+        // --- Checkin operations ---
+        function devAddCheckin(){
+            const h=devSelectedHabit();if(!h)return;
+            const date=document.getElementById('devCheckinDate').value;
+            if(!date){showToast('请选择日期');return;}
+            const time=document.getElementById('devCheckinTime').value||'12:00';
+            const note=document.getElementById('devCheckinNote').value.trim();
+            h.checkins[date]={time:time,note:note};
+            h.bestStreak=Math.max(h.bestStreak||0,calcStreakFrom(h.checkins));
+            saveLocalData(data);
+            devOnHabitChange();updateUI();devRefreshHabitList();
+            document.getElementById('devHabitSelect').value=h.id;
+            showToast(`已添加 ${date} 打卡`);
+        }
+
+        function devRemoveCheckin(){
+            const h=devSelectedHabit();if(!h)return;
+            const date=document.getElementById('devCheckinDate').value;
+            if(!date){showToast('请选择日期');return;}
+            if(!h.checkins[date]){showToast(`${date} 无打卡记录`);return;}
+            delete h.checkins[date];
+            h.bestStreak=Math.max(0,calcStreakFrom(h.checkins));
+            saveLocalData(data);
+            devOnHabitChange();updateUI();devRefreshHabitList();
+            document.getElementById('devHabitSelect').value=h.id;
+            showToast(`已删除 ${date} 打卡`);
+        }
+
+        function devBatchAdd(){
+            const h=devSelectedHabit();if(!h)return;
+            const now=new Date();
+            const startStr=prompt('起始日期（含）：','2026-01-01');
+            if(!startStr)return;
+            const endStr=prompt('结束日期（含）：',todayKey());
+            if(!endStr)return;
+            const start=new Date(startStr),end=new Date(endStr);
+            if(isNaN(start)||isNaN(end)||start>end){showToast('日期范围无效');return;}
+            if(!confirm(`将在 ${startStr} 至 ${endStr} 之间批量添加打卡记录，确定？`))return;
+            let added=0;
+            for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+                const k=dateKey(d.getFullYear(),d.getMonth()+1,d.getDate());
+                if(d>now)break;
+                if(!h.checkins[k]){h.checkins[k]={time:'12:00',note:''};added++;}
+            }
+            h.bestStreak=Math.max(h.bestStreak||0,calcStreakFrom(h.checkins));
+            saveLocalData(data);
+            devOnHabitChange();updateUI();devRefreshHabitList();
+            document.getElementById('devHabitSelect').value=h.id;
+            document.getElementById('devBatchInfo').textContent=`已添加 ${added} 条（跳过已有记录）`;
+            showToast(`批量添加完成，共 ${added} 天`);
+        }
+
+        // --- Sync ---
+        async function devPull(){
+            document.getElementById('devError').textContent='';
+            const token=getToken();
+            if(!token){document.getElementById('devError').textContent='未设置 Token';return;}
+            if(!confirm('⚠️ 从云端拉取将覆盖当前本地数据，确定？'))return;
+            try{
+                const resp=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,{headers:apiHeaders(),cache:'no-store'});
+                if(!resp.ok){const b=await resp.text();throw new Error(`HTTP ${resp.status}: ${b.slice(0,200)}`);}
+                const j=await resp.json();
+                const raw=atob(j.content.replace(/\s/g,''));
+                const obj=JSON.parse(raw);
+                data=migrateOldData(obj);
+                saveLocalData(data);
+                devRefreshHabitList();devOnHabitChange();updateUI();
+                devRefreshSha();
+                document.getElementById('devSyncNote').textContent='已从云端覆盖本地';
+                showToast('✅ 已从云端拉取');
+            }catch(e){document.getElementById('devError').textContent='拉取失败: '+e.message;}
+        }
+
+        async function devPush(){
+            document.getElementById('devError').textContent='';
+            document.getElementById('devSyncNote').textContent='';
+            const token=getToken();
+            if(!token){document.getElementById('devError').textContent='未设置 Token';return;}
+            if(!confirm('⚠️ 将本地数据推送到 GitHub 覆盖远程 data.json，确定？'))return;
+            let sha=null;
+            try{
+                const resp=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,{headers:apiHeaders(),cache:'no-store'});
+                if(resp.ok){const j=await resp.json();sha=j.sha;}
+            }catch(e){}
+            const payload={habits:data.habits,activeHabitId:data.activeHabitId};
+            const body={message:'Dev manual update data.json',content:b64Encode(JSON.stringify(payload,null,2))};
+            if(sha)body.sha=sha;
+            try{
+                const resp=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,{method:'PUT',headers:apiHeaders(),body:JSON.stringify(body)});
+                const rb=await resp.json();
+                if(!resp.ok){document.getElementById('devError').textContent='推送失败: '+(rb.message||`HTTP ${resp.status}`);return;}
+                devRefreshSha();
+                document.getElementById('devSyncNote').textContent='远程已更新';
+                showToast('✅ 已推送到 GitHub');
+            }catch(e){document.getElementById('devError').textContent='推送异常: '+e.message;}
+        }
+
         // ==================== Event Bindings ====================
         document.getElementById('resetModal').addEventListener('click',function(e){if(e.target===this)hideResetModal();});
         document.getElementById('tokenModal').addEventListener('click',function(e){if(e.target===this)hideTokenModal();});
         document.getElementById('habitModal').addEventListener('click',function(e){if(e.target===this)hideHabitModal();});
         document.getElementById('yearReportModal').addEventListener('click',function(e){if(e.target===this)hideYearReport();});
-        document.addEventListener('keydown',function(e){if(e.key==='Escape'){hideResetModal();hideTokenModal();hideHabitModal();hideYearReport();}});
+        document.getElementById('devModal').addEventListener('click',function(e){if(e.target===this)hideDevModal();});
+        document.addEventListener('keydown',function(e){if(e.key==='Escape'){hideResetModal();hideTokenModal();hideHabitModal();hideYearReport();hideDevModal();}});
 
         // ==================== Init ====================
         function init(){
             data=loadLocalData();
+            syncAbort=false;
             renderHabitTabs();
             updateUI();
             syncOnLoad().then(()=>updateUI());
