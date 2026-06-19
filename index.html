@@ -7,10 +7,8 @@
     <style>
         :root {
             --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            --radius: 16px;
-            --radius-sm: 10px;
+            --radius: 16px; --radius-sm: 10px;
         }
-
         .theme-dark, [data-theme="dark"] {
             --bg: #09090f; --bg-secondary: #111118; --card: #15151f;
             --card-hover: #1c1c2a; --border: #222233; --border-glow: rgba(108,92,231,0.25);
@@ -26,8 +24,10 @@
             --modal-overlay: rgba(0,0,0,0.7); --theme-toggle-bg: #222233;
             --sync-badge: #222233; --ring-track: rgba(255,255,255,0.06);
             --glass: rgba(21,21,31,0.85);
+            --heatmap-empty: #1a1a2a; --heatmap-l1: rgba(0,210,160,0.15);
+            --heatmap-l2: rgba(0,210,160,0.35); --heatmap-l3: rgba(0,210,160,0.55);
+            --heatmap-l4: rgba(0,210,160,0.75);
         }
-
         .theme-light, [data-theme="light"] {
             --bg: #f4f4f9; --bg-secondary: #eaeaef; --card: #ffffff;
             --card-hover: #f8f8fd; --border: #e0e0ec; --border-glow: rgba(91,76,219,0.15);
@@ -43,46 +43,44 @@
             --modal-overlay: rgba(0,0,0,0.35); --theme-toggle-bg: #e0e0e8;
             --sync-badge: #e8e8ee; --ring-track: rgba(0,0,0,0.04);
             --glass: rgba(255,255,255,0.85);
+            --heatmap-empty: #ebedf0; --heatmap-l1: rgba(0,168,122,0.18);
+            --heatmap-l2: rgba(0,168,122,0.4); --heatmap-l3: rgba(0,168,122,0.65);
+            --heatmap-l4: rgba(0,168,122,0.85);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden;
-            transition: background var(--transition), color var(--transition);
-            position: relative;
+            transition: background var(--transition), color var(--transition); position: relative;
         }
-
-        /* ========== Animated Background ========== */
-        .bg-canvas {
+        .bg-canvas, .confetti-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 0; opacity: 0.5;
+            pointer-events: none; z-index: 0;
         }
+        .bg-canvas { opacity: 0.5; }
         .theme-light .bg-canvas { opacity: 0.3; }
-
+        .confetti-canvas { z-index: 999; }
         .container {
-            width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px;
-            display: flex; flex-direction: column; gap: 18px; position: relative; z-index: 1;
+            width: 100%; max-width: 900px; margin: 0 auto; padding: 24px 20px;
+            display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1;
         }
-
-        /* ========== Top Bar ========== */
         .top-bar {
             display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 10px;
+            flex-wrap: wrap; gap: 8px;
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             background: var(--glass); border: 1px solid var(--border);
-            border-radius: 14px; padding: 12px 18px;
+            border-radius: 14px; padding: 10px 16px;
             box-shadow: var(--shadow); transition: all var(--transition);
         }
         .top-bar:hover { border-color: var(--border-glow); }
-        .time-weather { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .time-weather { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .time-block { display: flex; align-items: baseline; gap: 6px; }
-        .time-main { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; color: var(--text); }
-        .time-weekday { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-        .top-right { display: flex; align-items: center; gap: 10px; }
+        .time-main { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; color: var(--text); }
+        .time-weekday { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+        .countdown-mini { font-size: 10px; color: var(--text-muted); padding: 2px 8px; border: 1px solid var(--border); border-radius: 10px; white-space: nowrap; }
+        .top-right { display: flex; align-items: center; gap: 8px; }
         .sync-badge {
-            font-size: 11px; padding: 4px 12px; border-radius: 20px;
+            font-size: 10px; padding: 3px 10px; border-radius: 20px;
             background: var(--sync-badge); color: var(--text-muted);
             letter-spacing: 1px; cursor: pointer; border: 1px solid transparent;
             font-family: inherit; transition: all var(--transition);
@@ -91,300 +89,275 @@
         .sync-badge:hover { border-color: var(--border); color: var(--text-secondary); }
         .sync-badge.synced { color: var(--success); border-color: rgba(0,210,160,0.2); }
         .sync-badge.error { color: var(--danger); border-color: rgba(255,107,107,0.2); }
-        .sync-badge .dot {
-            display: inline-block; width: 5px; height: 5px; border-radius: 50%;
-            margin-right: 4px; vertical-align: middle;
-            background: var(--text-muted); transition: background var(--transition);
-        }
+        .sync-badge .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 4px; vertical-align: middle; background: var(--text-muted); transition: background var(--transition); }
         .sync-badge.synced .dot { background: var(--success); box-shadow: 0 0 6px rgba(0,210,160,0.5); }
         .sync-badge.error .dot { background: var(--danger); }
-        .theme-selector { display: flex; background: var(--theme-toggle-bg); border-radius: 20px; padding: 3px; }
-        .theme-selector button {
-            width: 32px; height: 28px; border: none; border-radius: 18px;
-            background: transparent; cursor: pointer; font-size: 13px; line-height: 1;
-            color: var(--text-muted); transition: all var(--transition);
-            display: flex; align-items: center; justify-content: center;
-        }
+        .theme-selector { display: flex; background: var(--theme-toggle-bg); border-radius: 20px; padding: 2px; }
+        .theme-selector button { width: 28px; height: 24px; border: none; border-radius: 18px; background: transparent; cursor: pointer; font-size: 12px; color: var(--text-muted); transition: all var(--transition); display: flex; align-items: center; justify-content: center; }
         .theme-selector button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
         .theme-selector button:hover:not(.active) { color: var(--text-secondary); }
-
-        /* ========== Header ========== */
-        .header { text-align: center; padding: 10px 0 4px; }
+        .header { text-align: center; padding: 6px 0 0; }
         .header h1 {
-            font-size: 28px; font-weight: 700; letter-spacing: 4px;
+            font-size: 26px; font-weight: 700; letter-spacing: 4px;
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 50%, #c4b5fd 100%);
-            background-size: 200% 200%;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text; animation: gradientShift 4s ease-in-out infinite;
         }
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        .header .subtitle {
-            color: var(--text-muted); font-size: 13px; margin-top: 4px;
-            letter-spacing: 2px; min-height: 20px;
-            transition: opacity 0.45s, transform 0.45s;
-        }
+        @keyframes gradientShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .header .subtitle { color: var(--text-muted); font-size: 12px; margin-top: 2px; letter-spacing: 2px; min-height: 18px; transition: opacity 0.45s, transform 0.45s; }
         .header .subtitle.fade { opacity: 0; transform: translateY(4px); }
 
-        /* ========== Main Layout ========== */
-        .main-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
-        .left-col, .right-col { display: flex; flex-direction: column; gap: 18px; }
+        /* Habit Tabs */
+        .habit-tabs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .habit-tab {
+            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--card); color: var(--text-secondary); cursor: pointer;
+            font-size: 13px; font-family: inherit; transition: all var(--transition);
+            white-space: nowrap; display: flex; align-items: center; gap: 5px;
+        }
+        .habit-tab:hover { border-color: var(--accent); color: var(--text); }
+        .habit-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 12px var(--accent-glow); }
+        .habit-tab .habit-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+        .habit-tab.active .habit-dot { opacity: 1; background: #fff; }
+        .habit-tab .habit-actions { margin-left: 4px; display: flex; gap: 2px; }
+        .habit-tab .habit-edit, .habit-tab .habit-del {
+            width: 18px; height: 18px; border-radius: 50%; border: none; cursor: pointer;
+            font-size: 10px; display: flex; align-items: center; justify-content: center;
+            background: transparent; color: inherit; opacity: 0; transition: opacity 0.2s;
+        }
+        .habit-tab:hover .habit-edit, .habit-tab:hover .habit-del { opacity: 0.6; }
+        .habit-tab:hover .habit-edit:hover, .habit-tab:hover .habit-del:hover { opacity: 1; }
+        .habit-add {
+            width: 32px; height: 32px; border-radius: 50%; border: 1.5px dashed var(--border);
+            background: transparent; color: var(--text-muted); cursor: pointer;
+            font-size: 18px; transition: all var(--transition); display: flex; align-items: center; justify-content: center;
+        }
+        .habit-add:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* ========== Counter Card ========== */
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .left-col, .right-col { display: flex; flex-direction: column; gap: 16px; }
         .counter-card {
             background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 40px 30px; text-align: center;
-            position: relative; overflow: visible; transition: all var(--transition);
-            box-shadow: var(--shadow);
+            border-radius: var(--radius); padding: 32px 24px; text-align: center;
+            position: relative; overflow: visible; transition: all var(--transition); box-shadow: var(--shadow);
         }
         .counter-card:hover { border-color: var(--border-glow); box-shadow: var(--shadow-lg), 0 0 40px var(--accent-glow); }
         .ring-container { position: relative; display: inline-block; }
-        .ring-svg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg);
-            width: 150px; height: 150px; pointer-events: none;
-        }
-        .ring-bg {
-            fill: none; stroke: var(--ring-track); stroke-width: 3;
-        }
-        .ring-fg {
-            fill: none; stroke: var(--accent); stroke-width: 3;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: drop-shadow(0 0 6px var(--accent-glow));
-        }
-        .streak-number {
-            font-size: 88px; font-weight: 800; line-height: 1;
-            color: var(--text); font-variant-numeric: tabular-nums;
-            transition: var(--transition); position: relative; z-index: 1;
-        }
+        .ring-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-90deg); width: 140px; height: 140px; pointer-events: none; }
+        .ring-bg { fill: none; stroke: var(--ring-track); stroke-width: 3; }
+        .ring-fg { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1); filter: drop-shadow(0 0 6px var(--accent-glow)); }
+        .streak-number { font-size: 80px; font-weight: 800; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; transition: var(--transition); position: relative; z-index: 1; }
         .streak-number.pulse { animation: numberPop 0.5s ease-out; }
-        @keyframes numberPop {
-            0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); }
-        }
-        .streak-label { color: var(--text-muted); font-size: 14px; margin-top: 6px; letter-spacing: 3px; }
-        .streak-message { color: var(--success); font-size: 14px; margin-top: 14px; font-weight: 500; min-height: 22px; transition: var(--transition); }
-
-        /* ========== Progress stages ========== */
-        .progress-stages {
-            display: flex; justify-content: space-between; margin-top: 20px; gap: 4px;
-        }
-        .stage-dot {
-            width: 8px; height: 8px; border-radius: 50%; background: var(--ring-track);
-            transition: all 0.5s;
-        }
+        @keyframes numberPop { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+        .streak-label { color: var(--text-muted); font-size: 13px; margin-top: 4px; letter-spacing: 3px; }
+        .streak-message { color: var(--success); font-size: 13px; margin-top: 10px; font-weight: 500; min-height: 20px; transition: var(--transition); }
+        .progress-stages { display: flex; justify-content: space-between; margin-top: 16px; gap: 2px; }
+        .stage-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ring-track); transition: all 0.5s; }
         .stage-dot.reached { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
 
-        /* ========== Buttons ========== */
-        .btn-group { display: flex; gap: 12px; }
+        .btn-group { display: flex; gap: 10px; }
         .btn {
-            flex: 1; padding: 15px 24px; border: none; border-radius: var(--radius-sm);
-            font-size: 15px; font-weight: 600; cursor: pointer; letter-spacing: 1px;
+            flex: 1; padding: 14px 20px; border: none; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px;
             transition: all var(--transition); font-family: inherit; position: relative; overflow: hidden;
         }
-        .btn::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
-            background-size: 200% 200%; opacity: 0; transition: opacity 0.3s;
-        }
-        .btn:hover::after { opacity: 1; animation: shimmer 1.5s ease-in-out infinite; }
-        @keyframes shimmer {
-            0% { background-position: 200% 0%; } 100% { background-position: -200% 0%; }
-        }
-        .btn:active { transform: scale(0.97); }
-        .btn-checkin {
-            background: linear-gradient(135deg, var(--accent), #5a4bd1); color: #fff;
-            box-shadow: 0 4px 20px var(--accent-glow);
-        }
-        .btn-checkin:hover:not(:disabled) {
-            box-shadow: 0 6px 30px rgba(108,92,231,0.45); transform: translateY(-2px);
-        }
-        .btn-checkin:disabled { background: var(--btn-disabled-bg); color: var(--btn-disabled-text); box-shadow: none; cursor: not-allowed; transform: none; }
-        .btn-checkin:disabled::after { display: none; }
-        .btn-checkin.checked { background: linear-gradient(135deg, var(--success), #00b894); box-shadow: 0 4px 20px rgba(0,210,160,0.25); }
-        .btn-checkin.checked:hover { box-shadow: 0 6px 26px rgba(0,210,160,0.4); }
-        .btn-reset { background: transparent; color: var(--danger); border: 1px solid var(--danger-border); }
-        .btn-reset:hover { background: var(--danger-bg); border-color: rgba(255,107,107,0.6); transform: translateY(-1px); }
+        .btn::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.1) 50%,transparent 60%); background-size:200% 200%; opacity:0; transition:opacity 0.3s; }
+        .btn:hover::after { opacity:1; animation:shimmer 1.5s ease-in-out infinite; }
+        @keyframes shimmer { 0%{background-position:200% 0%} 100%{background-position:-200% 0%} }
+        .btn:active { transform:scale(0.97); }
+        .btn-checkin { background:linear-gradient(135deg,var(--accent),#5a4bd1); color:#fff; box-shadow:0 4px 20px var(--accent-glow); }
+        .btn-checkin:hover:not(:disabled) { box-shadow:0 6px 30px rgba(108,92,231,0.45); transform:translateY(-2px); }
+        .btn-checkin:disabled { background:var(--btn-disabled-bg); color:var(--btn-disabled-text); box-shadow:none; cursor:not-allowed; transform:none; }
+        .btn-checkin:disabled::after { display:none; }
+        .btn-checkin.checked { background:linear-gradient(135deg,var(--success),#00b894); box-shadow:0 4px 20px rgba(0,210,160,0.25); }
+        .btn-reset { background:transparent; color:var(--danger); border:1px solid var(--danger-border); flex: 0.5; }
+        .btn-reset:hover { background:var(--danger-bg); border-color:rgba(255,107,107,0.6); transform:translateY(-1px); }
+        .btn-share { background:transparent; color:var(--accent); border:1px solid var(--accent); flex:0.5; font-size:13px; }
+        .btn-share:hover { background:rgba(124,111,247,0.08); transform:translateY(-1px); }
 
-        /* ========== Stats ========== */
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        /* Note area */
+        .note-area { margin-top: 8px; display: flex; gap: 8px; align-items: center; }
+        .note-input {
+            flex:1; padding: 8px 12px; border:1px solid var(--border); border-radius: 8px;
+            background: var(--bg-secondary); color: var(--text); font-size: 12px; font-family: inherit;
+            outline: none; transition: all var(--transition);
+        }
+        .note-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        .note-save {
+            padding: 8px 14px; border: none; border-radius: 8px; background: var(--accent);
+            color: #fff; cursor: pointer; font-size: 12px; font-family: inherit; white-space: nowrap; transition: all var(--transition);
+        }
+        .note-save:hover { opacity: 0.85; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
         .stat-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 22px 12px; text-align: center;
-            transition: all var(--transition); box-shadow: var(--shadow);
-            position: relative; overflow: hidden;
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:18px 10px; text-align:center;
+            transition:all var(--transition); box-shadow:var(--shadow); position:relative; overflow:hidden;
         }
-        .stat-card:hover { transform: translateY(-2px); border-color: var(--border-glow); box-shadow: var(--shadow-lg); }
-        .stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; transition: var(--transition); }
-        .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 6px; letter-spacing: 1px; }
-        .stat-card.highlight { border-color: rgba(124,111,247,0.3); }
-        .stat-card.highlight .stat-value { color: var(--accent); }
-        .stat-card.highlight::after {
-            content: ''; position: absolute; bottom: 0; left: 20%; width: 60%; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
-            border-radius: 1px;
-        }
+        .stat-card:hover { transform:translateY(-2px); border-color:var(--border-glow); box-shadow:var(--shadow-lg); }
+        .stat-value { font-size:24px; font-weight:700; color:var(--text); line-height:1; transition:var(--transition); }
+        .stat-label { font-size:11px; color:var(--text-muted); margin-top:4px; letter-spacing:1px; }
+        .stat-card.highlight { border-color:rgba(124,111,247,0.3); }
+        .stat-card.highlight .stat-value { color:var(--accent); }
+        .stat-card.highlight::after { content:''; position:absolute; bottom:0; left:20%; width:60%; height:2px; background:linear-gradient(90deg,transparent,var(--accent),transparent); border-radius:1px; }
 
-        /* ========== Calendar ========== */
         .calendar-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 24px;
-            transition: all var(--transition); box-shadow: var(--shadow);
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:20px; transition:all var(--transition); box-shadow:var(--shadow);
         }
-        .calendar-card:hover { border-color: var(--border-glow); }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .calendar-title { font-size: 14px; font-weight: 600; letter-spacing: 1px; color: var(--text); }
-        .calendar-nav { display: flex; gap: 6px; }
-        .calendar-nav button {
-            width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 8px;
-            background: transparent; color: var(--text); cursor: pointer; font-size: 13px;
-            transition: all var(--transition); display: flex; align-items: center; justify-content: center;
-        }
-        .calendar-nav button:hover { background: var(--card-hover); border-color: var(--accent); color: var(--accent); }
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; }
-        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .day-cell {
-            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-            border-radius: 8px; font-size: 12px; color: var(--text-secondary);
-            transition: all 0.2s; max-width: 38px; justify-self: center;
-            cursor: default; position: relative;
-        }
-        .day-cell.checked {
-            background: var(--calendar-checked-bg); color: var(--success); font-weight: 600;
-            box-shadow: inset 0 0 0 1px rgba(0,210,160,0.2);
-        }
-        .day-cell.checked::after {
-            content: ''; position: absolute; inset: 0; border-radius: 8px;
-            background: radial-gradient(circle, rgba(0,210,160,0.15) 0%, transparent 70%);
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .day-cell.checked:hover::after { opacity: 1; }
-        .day-cell.today { border: 1.5px solid var(--today-border); color: var(--text); font-weight: 600; }
-        .day-cell.future { color: var(--future-text); }
-        .day-cell:not(.future):not(.checked):hover { background: var(--card-hover); }
+        .calendar-card:hover { border-color:var(--border-glow); }
+        .calendar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+        .calendar-title { font-size:13px; font-weight:600; letter-spacing:1px; color:var(--text); }
+        .calendar-nav { display:flex; gap:4px; }
+        .calendar-nav button { width:28px; height:28px; border:1px solid var(--border); border-radius:8px; background:transparent; color:var(--text); cursor:pointer; font-size:12px; transition:all var(--transition); display:flex; align-items:center; justify-content:center; }
+        .calendar-nav button:hover { background:var(--card-hover); border-color:var(--accent); color:var(--accent); }
+        .weekdays { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:10px; color:var(--text-muted); margin-bottom:6px; letter-spacing:1px; }
+        .days-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+        .day-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:7px; font-size:11px; color:var(--text-secondary); transition:all 0.2s; cursor:default; position:relative; }
+        .day-cell.checked { background:var(--calendar-checked-bg); color:var(--success); font-weight:600; box-shadow:inset 0 0 0 1px rgba(0,210,160,0.2); cursor:pointer; }
+        .day-cell.checked:hover { box-shadow:inset 0 0 0 2px var(--success); }
+        .day-cell.has-note::before { content:''; position:absolute; top:3px; right:3px; width:4px; height:4px; border-radius:50%; background:var(--accent); }
+        .day-cell.today { border:1.5px solid var(--today-border); color:var(--text); font-weight:600; }
+        .day-cell.future { color:var(--future-text); }
+        .day-cell:not(.future):not(.checked):hover { background:var(--card-hover); }
 
-        /* ========== Quote card ========== */
+        /* Heatmap */
+        .heatmap-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; transition:all var(--transition); box-shadow:var(--shadow); overflow-x:auto; }
+        .heatmap-card:hover { border-color:var(--border-glow); }
+        .heatmap-title { font-size:12px; color:var(--text-muted); letter-spacing:2px; margin-bottom:10px; text-align:center; }
+        .heatmap-wrap { display:flex; gap:2px; min-width:fit-content; }
+        .heatmap-weeks { display:flex; flex-direction:column; gap:2px; }
+        .heatmap-week { display:flex; gap:2px; }
+        .heatmap-cell { width:12px; height:12px; border-radius:2px; background:var(--heatmap-empty); transition:all 0.2s; cursor:default; position:relative; flex-shrink:0; }
+        .heatmap-cell.l1 { background:var(--heatmap-l1); }
+        .heatmap-cell.l2 { background:var(--heatmap-l2); }
+        .heatmap-cell.l3 { background:var(--heatmap-l3); }
+        .heatmap-cell.l4 { background:var(--heatmap-l4); }
+        .heatmap-cell.future-cell { opacity:0.3; }
+        .heatmap-cell:hover { transform:scale(1.6); z-index:2; }
+        .heatmap-labels { display:flex; gap:2px; padding-left:4px; font-size:9px; color:var(--text-muted); margin-bottom:4px; flex-wrap:wrap; }
+        .heatmap-labels span { min-width:40px; text-align:center; }
+        .heatmap-legend { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text-muted); margin-top:8px; justify-content:center; }
+        .heatmap-legend .swatch { width:10px; height:10px; border-radius:2px; }
+        .heatmap-tooltip { position:fixed; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:11px; color:var(--text); box-shadow:var(--shadow-lg); pointer-events:none; z-index:50; white-space:nowrap; opacity:0; transition:opacity 0.15s; }
+
+        /* Charts */
+        .charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .chart-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; transition:all var(--transition); box-shadow:var(--shadow); }
+        .chart-card:hover { border-color:var(--border-glow); }
+        .chart-title { font-size:12px; color:var(--text-muted); letter-spacing:2px; margin-bottom:12px; text-align:center; }
+        .time-bars { display:flex; flex-direction:column; gap:3px; }
+        .time-row { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text-muted); }
+        .time-row .bar-label { width:32px; text-align:right; flex-shrink:0; }
+        .time-row .bar-track { flex:1; height:8px; background:var(--ring-track); border-radius:4px; overflow:hidden; }
+        .time-row .bar-fill { height:100%; background:var(--accent); border-radius:4px; transition:width 0.5s; min-width:0; }
+        .time-row .bar-count { width:20px; text-align:left; font-weight:600; color:var(--text-secondary); flex-shrink:0; }
+        .compare-wrap { display:flex; flex-direction:column; gap:12px; }
+        .compare-item { display:flex; align-items:center; gap:8px; }
+        .compare-item .cmp-label { width:36px; font-size:10px; color:var(--text-muted); text-align:right; flex-shrink:0; }
+        .compare-item .cmp-bar-wrap { flex:1; height:20px; background:var(--ring-track); border-radius:4px; overflow:hidden; display:flex; }
+        .compare-item .cmp-bar { height:100%; border-radius:4px; transition:width 0.5s; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; font-size:10px; font-weight:600; color:#fff; min-width:0; }
+        .compare-item .cmp-bar.this-m { background:var(--accent); }
+        .compare-item .cmp-bar.last-m { background:var(--text-muted); }
+        .compare-summary { font-size:11px; color:var(--text-secondary); text-align:center; }
+        .compare-summary .up { color:var(--success); }
+        .compare-summary .down { color:var(--danger); }
+
         .quote-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 22px 24px; text-align: center;
-            transition: all var(--transition); box-shadow: var(--shadow);
-            position: relative; overflow: hidden;
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:18px 24px; text-align:center;
+            transition:all var(--transition); box-shadow:var(--shadow); position:relative; overflow:hidden;
         }
-        .quote-card:hover { border-color: var(--border-glow); }
-        .quote-card::before {
-            content: '"'; position: absolute; top: -10px; left: 16px;
-            font-size: 72px; color: var(--accent); opacity: 0.08; font-family: Georgia, serif;
-            line-height: 1;
-        }
-        .quote-text {
-            font-size: 14px; color: var(--text-secondary); line-height: 1.8;
-            letter-spacing: 1px; transition: all 0.5s; min-height: 50px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .quote-text.fade { opacity: 0; transform: translateY(6px); }
+        .quote-card:hover { border-color:var(--border-glow); }
+        .quote-card::before { content:'"'; position:absolute; top:-10px; left:16px; font-size:60px; color:var(--accent); opacity:0.06; font-family:Georgia,serif; line-height:1; }
+        .quote-text { font-size:13px; color:var(--text-secondary); line-height:1.8; letter-spacing:1px; transition:all 0.5s; min-height:40px; display:flex; align-items:center; justify-content:center; }
+        .quote-text.fade { opacity:0; transform:translateY(6px); }
+        .week-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; transition:all var(--transition); box-shadow:var(--shadow); }
+        .week-card:hover { border-color:var(--border-glow); }
+        .week-card-title { font-size:11px; color:var(--text-muted); letter-spacing:2px; margin-bottom:10px; text-align:center; }
+        .week-strip { display:flex; gap:4px; justify-content:center; margin-bottom:6px; }
+        .week-strip .wday { width:30px; height:30px; border-radius:7px; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text-muted); transition:all 0.25s; }
+        .week-strip .wday.done { background:var(--success-bg); border-color:rgba(0,210,160,0.3); color:var(--success); font-weight:600; }
+        .week-strip .wday.today-w { border-color:var(--accent); color:var(--text); font-weight:600; box-shadow:0 0 8px var(--accent-glow); }
+        .week-labels { display:flex; gap:4px; justify-content:center; font-size:9px; color:var(--text-muted); letter-spacing:1px; }
+        .week-labels span { width:30px; text-align:center; }
+        .divider { display:flex; align-items:center; gap:10px; opacity:0.3; }
+        .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+        .divider-dot { width:4px; height:4px; border-radius:50%; background:var(--accent); }
 
-        /* ========== Week card ========== */
-        .week-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; transition: all var(--transition); box-shadow: var(--shadow); }
-        .week-card:hover { border-color: var(--border-glow); }
-        .week-card-title { font-size: 12px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 12px; text-align: center; }
-        .week-strip { display: flex; gap: 6px; justify-content: center; margin-bottom: 8px; }
-        .week-strip .wday { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted); transition: all 0.25s; }
-        .week-strip .wday.done { background: var(--success-bg); border-color: rgba(0,210,160,0.3); color: var(--success); font-weight: 600; }
-        .week-strip .wday.today-w { border-color: var(--accent); color: var(--text); font-weight: 600; box-shadow: 0 0 8px var(--accent-glow); }
-        .week-labels { display: flex; gap: 6px; justify-content: center; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
-        .week-labels span { width: 32px; text-align: center; }
+        /* Modals */
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--modal-overlay); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity 0.3s; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+        .modal-overlay.active { opacity:1; pointer-events:all; }
+        .modal { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:28px 24px; text-align:center; max-width:420px; width:90%; box-shadow:var(--shadow-lg); animation:modalIn 0.3s ease-out; max-height:85vh; overflow-y:auto; }
+        @keyframes modalIn { from{opacity:0;transform:scale(0.95) translateY(10px);} to{opacity:1;transform:scale(1) translateY(0);} }
+        .modal h3 { font-size:16px; margin-bottom:8px; letter-spacing:1px; color:var(--text); }
+        .modal p { color:var(--text-secondary); font-size:13px; margin-bottom:18px; line-height:1.6; }
+        .modal .btn-group { justify-content:center; }
+        .modal .btn-cancel { background:transparent; border:1px solid var(--border); color:var(--text); flex:none; padding:9px 20px; border-radius:var(--radius-sm); cursor:pointer; font-size:13px; transition:all var(--transition); }
+        .modal .btn-cancel:hover { background:var(--card-hover); }
+        .modal .btn-confirm { background:var(--danger); color:#fff; flex:none; padding:9px 20px; border-radius:var(--radius-sm); cursor:pointer; border:none; font-size:13px; transition:all var(--transition); }
+        .modal .btn-confirm.primary { background:var(--accent); }
+        .modal input { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg-secondary); color:var(--text); font-size:13px; font-family:inherit; margin-bottom:14px; outline:none; transition:all var(--transition); }
+        .modal input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+        .modal .hint { font-size:10px; color:var(--text-muted); margin-bottom:14px; line-height:1.6; text-align:left; }
+        .modal .hint a { color:var(--accent); text-decoration:none; }
+        .modal .hint a:hover { text-decoration:underline; }
+        .emoji-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; margin-bottom:14px; }
+        .emoji-opt { font-size:20px; padding:6px; border-radius:8px; cursor:pointer; border:1px solid transparent; background:transparent; transition:all var(--transition); text-align:center; }
+        .emoji-opt:hover { background:var(--card-hover); border-color:var(--border); }
+        .emoji-opt.selected { border-color:var(--accent); background:var(--success-bg); }
+        .color-presets { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; justify-content:center; }
+        .color-opt { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all var(--transition); }
+        .color-opt:hover { transform:scale(1.15); }
+        .color-opt.selected { border-color:var(--text); box-shadow:0 0 8px var(--accent-glow); }
+        .year-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:14px; }
+        .year-stat { background:var(--bg-secondary); border-radius:8px; padding:12px; text-align:center; }
+        .year-stat .ys-val { font-size:22px; font-weight:700; color:var(--accent); }
+        .year-stat .ys-lbl { font-size:10px; color:var(--text-muted); margin-top:2px; }
+        .year-months { display:flex; gap:2px; align-items:flex-end; height:80px; margin-bottom:6px; }
+        .year-months .ym-bar { flex:1; border-radius:3px 3px 0 0; background:var(--accent); transition:height 0.5s; min-width:8px; position:relative; }
+        .year-months .ym-bar:hover { opacity:0.8; }
+        .year-months .ym-bar .ym-lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:8px; color:var(--text-muted); }
 
-        /* ========== Decorative divider ========== */
-        .divider { display: flex; align-items: center; gap: 10px; opacity: 0.4; }
-        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-        .divider-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+        .toast { position:fixed; bottom:40px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 24px; font-size:13px; color:var(--text); letter-spacing:1px; transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275); z-index:200; box-shadow:var(--shadow-lg); white-space:nowrap; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+        .toast.show { transform:translateX(-50%) translateY(0); }
 
-        /* ========== Modal ========== */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--modal-overlay); display: flex; align-items: center; justify-content: center;
-            z-index: 100; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        @media (min-width:720px) {
+            .main-grid { grid-template-columns:1fr 1fr; }
+            .streak-number { font-size:84px; }
         }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
-        .modal {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 32px 28px; text-align: center;
-            max-width: 380px; width: 90%; box-shadow: var(--shadow-lg);
-            animation: modalIn 0.3s ease-out;
+        @media (min-width:900px) {
+            .container { padding:32px 20px; }
+            .streak-number { font-size:96px; }
+            .ring-svg { width:160px; height:160px; }
         }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .modal h3 { font-size: 17px; margin-bottom: 10px; letter-spacing: 1px; color: var(--text); }
-        .modal p { color: var(--text-secondary); font-size: 14px; margin-bottom: 22px; line-height: 1.6; }
-        .modal .btn-group { justify-content: center; }
-        .modal .btn-cancel {
-            background: transparent; border: 1px solid var(--border); color: var(--text);
-            flex: none; padding: 10px 24px; border-radius: var(--radius-sm);
-            cursor: pointer; font-size: 14px; transition: all var(--transition);
-        }
-        .modal .btn-cancel:hover { background: var(--card-hover); }
-        .modal .btn-confirm {
-            background: var(--danger); color: #fff; flex: none; padding: 10px 24px;
-            border-radius: var(--radius-sm); cursor: pointer; border: none; font-size: 14px; transition: all var(--transition);
-        }
-        .modal input {
-            width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
-            background: var(--bg-secondary); color: var(--text); font-size: 13px; font-family: inherit;
-            margin-bottom: 16px; outline: none; transition: all var(--transition);
-        }
-        .modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-        .modal .hint { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; text-align: left; }
-        .modal .hint a { color: var(--accent); text-decoration: none; }
-        .modal .hint a:hover { text-decoration: underline; }
-
-        /* Toast */
-        .toast {
-            position: fixed; bottom: 40px; left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 14px 28px; font-size: 14px;
-            color: var(--text); letter-spacing: 1px;
-            transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
-            z-index: 200; box-shadow: var(--shadow-lg); white-space: nowrap;
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-
-        /* Responsive */
-        @media (min-width: 680px) {
-            .main-grid { grid-template-columns: 1fr 1fr; }
-            .streak-number { font-size: 84px; }
-        }
-        @media (min-width: 800px) {
-            .container { padding: 32px 20px; }
-            .streak-number { font-size: 100px; }
-            .ring-svg { width: 170px; height: 170px; }
-        }
-        @media (max-width: 400px) {
-            .streak-number { font-size: 68px; }
-            .ring-svg { width: 130px; height: 130px; }
-            .counter-card { padding: 30px 20px; }
-            .container { gap: 12px; padding: 14px 10px; }
-            .btn { padding: 13px 16px; font-size: 14px; }
-            .stat-value { font-size: 22px; }
-            .top-bar { padding: 10px 14px; gap: 8px; }
-            .quote-card { padding: 16px; }
+        @media (max-width:500px) {
+            .streak-number { font-size:60px; }
+            .ring-svg { width:110px; height:110px; }
+            .counter-card { padding:24px 16px; }
+            .container { gap:10px; padding:12px 8px; }
+            .btn { padding:12px 14px; font-size:13px; }
+            .stat-value { font-size:20px; }
+            .top-bar { padding:8px 10px; gap:6px; }
+            .habit-tab { font-size:11px; padding:6px 12px; }
+            .charts-row { grid-template-columns:1fr; }
+            .heatmap-cell { width:10px; height:10px; }
         }
     </style>
 </head>
 <body class="theme-dark">
-    <!-- Background Animation -->
     <canvas class="bg-canvas" id="bgCanvas"></canvas>
+    <canvas class="confetti-canvas" id="confettiCanvas"></canvas>
 
     <div class="container">
-        <!-- Top Bar -->
         <div class="top-bar">
             <div class="time-weather">
                 <div class="time-block">
                     <span class="time-main" id="timeDisplay">--</span>
                     <span class="time-weekday" id="weekdayDisplay">--</span>
                 </div>
+                <span class="countdown-mini" id="countdownDisplay">--</span>
             </div>
             <div class="top-right">
                 <button class="sync-badge" id="syncBadge" onclick="showTokenModal()" title="设置 GitHub Token 跨设备同步"><span class="dot"></span>未同步</button>
@@ -396,22 +369,20 @@
             </div>
         </div>
 
-        <!-- Header -->
         <div class="header">
             <h1>自 律 打 卡</h1>
             <div class="subtitle" id="subtitle">坚持每一天</div>
         </div>
 
-        <!-- Main Grid -->
+        <div class="habit-tabs" id="habitTabs"></div>
+
         <div class="main-grid">
             <div class="left-col">
-                <!-- Counter -->
                 <div class="counter-card">
                     <div class="ring-container">
                         <svg class="ring-svg" viewBox="0 0 170 170">
                             <circle class="ring-bg" cx="85" cy="85" r="80"/>
-                            <circle class="ring-fg" id="ringFg" cx="85" cy="85" r="80"
-                                stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
+                            <circle class="ring-fg" id="ringFg" cx="85" cy="85" r="80" stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
                         </svg>
                         <div class="streak-number" id="streakNumber">0</div>
                     </div>
@@ -430,13 +401,16 @@
                     </div>
                 </div>
 
-                <!-- Buttons -->
                 <div class="btn-group">
                     <button class="btn btn-checkin" id="btnCheckin" onclick="checkin()">今日打卡</button>
-                    <button class="btn btn-reset" onclick="showResetModal()">清除数据</button>
+                    <button class="btn btn-reset" onclick="showResetModal()">清除</button>
+                    <button class="btn btn-share" onclick="generateShareCard()" title="生成分享图片">📤</button>
+                </div>
+                <div class="note-area" id="noteArea" style="display:none">
+                    <input class="note-input" id="noteInput" placeholder="写一句备注…" maxlength="100">
+                    <button class="note-save" onclick="saveNote()">保存</button>
                 </div>
 
-                <!-- Stats -->
                 <div class="stats-row">
                     <div class="stat-card highlight"><div class="stat-value" id="currentStreak">0</div><div class="stat-label">当前连续</div></div>
                     <div class="stat-card"><div class="stat-value" id="totalDays">0</div><div class="stat-label">累计天数</div></div>
@@ -445,7 +419,6 @@
             </div>
 
             <div class="right-col">
-                <!-- Calendar -->
                 <div class="calendar-card">
                     <div class="calendar-header">
                         <span class="calendar-title" id="calendarTitle"></span>
@@ -458,20 +431,49 @@
                     <div class="days-grid" id="daysGrid"></div>
                 </div>
 
-                <!-- Daily Quote -->
-                <div class="quote-card">
-                    <div class="quote-text" id="quoteText">自律即自由</div>
-                </div>
-
-                <!-- This Week mini heatmap -->
                 <div class="week-card">
                     <div class="week-card-title">本周打卡</div>
                     <div class="week-strip" id="weekStrip"></div>
-                    <div class="week-labels">
-                        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
-                    </div>
+                    <div class="week-labels"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                </div>
+
+                <div class="quote-card">
+                    <div class="quote-text" id="quoteText">自律即自由</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Heatmap -->
+        <div class="heatmap-card">
+            <div class="heatmap-title">📅 年度打卡热力图</div>
+            <div class="heatmap-labels" id="heatmapLabels"></div>
+            <div class="heatmap-wrap" id="heatmapWrap"></div>
+            <div class="heatmap-legend">
+                <span>少</span>
+                <span class="swatch" style="background:var(--heatmap-empty)"></span>
+                <span class="swatch" style="background:var(--heatmap-l1)"></span>
+                <span class="swatch" style="background:var(--heatmap-l2)"></span>
+                <span class="swatch" style="background:var(--heatmap-l3)"></span>
+                <span class="swatch" style="background:var(--heatmap-l4)"></span>
+                <span>多</span>
+            </div>
+        </div>
+        <div class="heatmap-tooltip" id="heatmapTooltip"></div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-title">⏰ 打卡时段分布</div>
+                <div class="time-bars" id="timeBars"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">📊 月度对比</div>
+                <div class="compare-wrap" id="compareWrap"></div>
+            </div>
+        </div>
+
+        <div class="btn-group" style="max-width:300px;margin:0 auto;">
+            <button class="btn btn-cancel" onclick="showYearReport()" style="flex:1;border:1px solid var(--border);background:transparent;color:var(--accent);">📊 年度报告</button>
         </div>
     </div>
 
@@ -500,8 +502,35 @@
             </div>
             <div class="btn-group">
                 <button class="btn-cancel" onclick="hideTokenModal()">取消</button>
-                <button class="btn-confirm" id="btnSaveToken" onclick="saveToken()" style="background:var(--accent);">保存</button>
+                <button class="btn-confirm primary" id="btnSaveToken" onclick="saveToken()">保存</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Habit Edit Modal -->
+    <div class="modal-overlay" id="habitModal">
+        <div class="modal">
+            <h3 id="habitModalTitle">新建习惯</h3>
+            <input type="text" id="habitNameInput" placeholder="习惯名称" maxlength="12">
+            <div class="emoji-grid" id="emojiGrid"></div>
+            <div class="color-presets" id="colorPresets"></div>
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="hideHabitModal()">取消</button>
+                <button class="btn-confirm primary" onclick="saveHabit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Year Report Modal -->
+    <div class="modal-overlay" id="yearReportModal">
+        <div class="modal" style="max-width:500px;">
+            <h3>📊 年度打卡报告</h3>
+            <div class="year-stats" id="yearStats"></div>
+            <div class="year-months" id="yearMonths"></div>
+            <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--text-muted);margin-bottom:14px;">
+                <span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span><span>8月</span><span>9月</span><span>10月</span><span>11月</span><span>12月</span>
+            </div>
+            <button class="btn-cancel" onclick="hideYearReport()" style="margin-top:4px;">关闭</button>
         </div>
     </div>
 
@@ -509,573 +538,680 @@
 
     <script>
         // ==================== Config ====================
-        const OWNER = 'eyJjaG';
-        const REPO = 'demo';
-        const DATA_PATH = 'data.json';
+        const OWNER = 'eyJjaG', REPO = 'demo', DATA_PATH = 'data.json';
         const STORAGE_KEY = 'disciplined_checkin_data';
         const THEME_KEY = 'disciplined_theme_pref';
         const TOKEN_KEY = 'disciplined_gh_token';
+        const HABIT_EMOJIS = ['💪','🏃','📚','🎯','🧘','💤','💧','🍎','✍️','🎨','🎵','💻','🌱','🙏','⏰','💰','📝','🧠','❤️','🌟','🔥','⚡','🏆','🎓'];
+        const HABIT_COLORS = ['#7c6ff7','#00d2a0','#ff6b6b','#ffa502','#45aaf2','#fc5c65','#26de81','#a55eea','#fed330','#4b7bec','#eb3b5a','#20bf6b'];
 
         // ==================== Animated Background ====================
-        (function() {
-            const canvas = document.getElementById('bgCanvas');
-            const ctx = canvas.getContext('2d');
-            let particles = [];
-            const maxParticles = 55;
-
-            function resize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
+        (function(){
+            const canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d');
+            let particles=[];
+            function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+            window.addEventListener('resize',resize);resize();
+            const isDark=()=>document.body.classList.contains('theme-dark');
+            class Particle{
+                constructor(){this.reset(true);}
+                reset(init){this.x=Math.random()*canvas.width;this.y=init?Math.random()*canvas.height:canvas.height+10;this.size=Math.random()*1.8+0.3;this.speed=Math.random()*0.4+0.15;this.opacity=Math.random()*0.35+0.05;this.wobble=Math.random()*Math.PI*2;this.wobbleSpeed=(Math.random()-0.5)*0.008;}
+                update(){this.y-=this.speed;this.wobble+=this.wobbleSpeed;this.x+=Math.sin(this.wobble)*0.3;if(this.y<-10)this.reset(false);if(this.x<-10)this.x=canvas.width+10;if(this.x>canvas.width+10)this.x=-10;}
+                draw(ctx){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle=isDark()?`rgba(124,111,247,${this.opacity})`:`rgba(108,92,231,${this.opacity*0.7})`;ctx.fill();}
             }
-            window.addEventListener('resize', resize);
-            resize();
-
-            const isDark = () => document.body.classList.contains('theme-dark');
-            const isLight = () => document.body.classList.contains('theme-light');
-
-            class Particle {
-                constructor() { this.reset(true); }
-                reset(init) {
-                    this.x = Math.random() * canvas.width;
-                    this.y = init ? Math.random() * canvas.height : canvas.height + 10;
-                    this.size = Math.random() * 1.8 + 0.3;
-                    this.speed = Math.random() * 0.4 + 0.15;
-                    this.opacity = Math.random() * 0.35 + 0.05;
-                    this.wobble = Math.random() * Math.PI * 2;
-                    this.wobbleSpeed = (Math.random() - 0.5) * 0.008;
-                }
-                update() {
-                    this.y -= this.speed;
-                    this.wobble += this.wobbleSpeed;
-                    this.x += Math.sin(this.wobble) * 0.3;
-                    if (this.y < -10) this.reset(false);
-                    if (this.x < -10) this.x = canvas.width + 10;
-                    if (this.x > canvas.width + 10) this.x = -10;
-                }
-                draw(ctx) {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    if (isDark()) {
-                        ctx.fillStyle = `rgba(124,111,247,${this.opacity})`;
-                    } else {
-                        ctx.fillStyle = `rgba(108,92,231,${this.opacity * 0.7})`;
-                    }
-                    ctx.fill();
-                }
-            }
-
-            while (particles.length < maxParticles) particles.push(new Particle());
-
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (const p of particles) { p.update(); p.draw(ctx); }
-
-                // Draw connections between nearby particles
-                for (let i = 0; i < particles.length; i++) {
-                    for (let j = i + 1; j < particles.length; j++) {
-                        const dx = particles[i].x - particles[j].x;
-                        const dy = particles[i].y - particles[j].y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist < 100) {
-                            const alpha = (1 - dist / 100) * 0.06;
-                            ctx.beginPath();
-                            ctx.moveTo(particles[i].x, particles[i].y);
-                            ctx.lineTo(particles[j].x, particles[j].y);
-                            ctx.strokeStyle = isDark()
-                                ? `rgba(124,111,247,${alpha})`
-                                : `rgba(108,92,231,${alpha * 0.6})`;
-                            ctx.lineWidth = 0.5;
-                            ctx.stroke();
-                        }
-                    }
-                }
-
+            while(particles.length<55)particles.push(new Particle());
+            function animate(){
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                for(const p of particles){p.update();p.draw(ctx);}
+                for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){const alpha=(1-dist/100)*0.06;ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=isDark()?`rgba(124,111,247,${alpha})`:`rgba(108,92,231,${alpha*0.6})`;ctx.lineWidth=0.5;ctx.stroke();}}}
                 requestAnimationFrame(animate);
             }
             animate();
         })();
 
+        // ==================== Confetti ====================
+        let confettiParticles=[],confettiAnimId=null;
+        const confettiCanvas=document.getElementById('confettiCanvas'),confettiCtx=confettiCanvas.getContext('2d');
+        function spawnConfetti(){
+            confettiCanvas.width=window.innerWidth;confettiCanvas.height=window.innerHeight;
+            const cx=window.innerWidth/2,cy=window.innerHeight/2;
+            for(let i=0;i<80;i++){
+                confettiParticles.push({
+                    x:cx+(Math.random()-0.5)*200,y:cy-100,
+                    vx:(Math.random()-0.5)*14,vy:Math.random()*-18-6,
+                    size:Math.random()*9+4,rot:Math.random()*360,rotSpd:(Math.random()-0.5)*12,
+                    color:`hsl(${Math.random()*360},75%,60%)`,shape:Math.random()>0.5?'rect':'circle',
+                    opacity:1,gravity:0.35,
+                });
+            }
+            if(!confettiAnimId)animateConfetti();
+        }
+        function animateConfetti(){
+            confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+            confettiParticles=confettiParticles.filter(p=>{
+                p.x+=p.vx;p.y+=p.vy;p.vy+=p.gravity;p.rot+=p.rotSpd;p.opacity-=0.012;
+                if(p.opacity<=0)return false;
+                confettiCtx.save();confettiCtx.translate(p.x,p.y);confettiCtx.rotate(p.rot*Math.PI/180);
+                confettiCtx.globalAlpha=p.opacity;confettiCtx.fillStyle=p.color;
+                if(p.shape==='rect')confettiCtx.fillRect(-p.size/2,-p.size/3,p.size,p.size*0.6);
+                else{confettiCtx.beginPath();confettiCtx.arc(0,0,p.size/2,0,Math.PI*2);confettiCtx.fill();}
+                confettiCtx.restore();return true;
+            });
+            if(confettiParticles.length>0)confettiAnimId=requestAnimationFrame(animateConfetti);
+            else{confettiAnimId=null;confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);}
+        }
+
+        // ==================== Sound ====================
+        function playCheckinSound(){
+            try{
+                const ctx=new(window.AudioContext||window.webkitAudioContext)();
+                [523.25,659.25,784.87].forEach((freq,i)=>{
+                    const osc=ctx.createOscillator(),gain=ctx.createGain();
+                    osc.connect(gain);gain.connect(ctx.destination);
+                    osc.frequency.value=freq;osc.type='sine';
+                    const t=ctx.currentTime+i*0.12;
+                    gain.gain.setValueAtTime(0.18,t);
+                    gain.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+                    osc.start(t);osc.stop(t+0.4);
+                });
+            }catch(e){}
+        }
+
         // ==================== GitHub Sync ====================
-        function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
-
-        function apiHeaders() {
-            const token = getToken();
-            return token
-                ? { 'Accept': 'application/vnd.github.v3+json', 'Authorization': 'Bearer ' + token }
-                : { 'Accept': 'application/vnd.github.v3+json' };
+        function getToken(){return localStorage.getItem(TOKEN_KEY)||'';}
+        function apiHeaders(){const t=getToken();return t?{'Accept':'application/vnd.github.v3+json','Authorization':'Bearer '+t}:{'Accept':'application/vnd.github.v3+json'};}
+        async function fetchRemoteData(){
+            const token=getToken();if(!token)return null;
+            try{
+                const resp=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,{headers:apiHeaders(),cache:'no-store'});
+                if(resp.status===404)return{_notFound:true};
+                if(!resp.ok){const b=await resp.text();throw new Error(`HTTP ${resp.status}: ${b.slice(0,200)}`);}
+                const j=await resp.json(),raw=atob(j.content.replace(/\s/g,'')),obj=JSON.parse(raw);
+                obj._sha=j.sha;return obj;
+            }catch(e){console.error('fetchRemoteData:',e);return null;}
+        }
+        function b64Encode(str){const bytes=new TextEncoder().encode(str);let b='';for(let i=0;i<bytes.length;i++)b+=String.fromCharCode(bytes[i]);return btoa(b);}
+        async function pushRemoteData(dataObj){
+            const token=getToken();if(!token)return{ok:false,error:'no_token'};
+            try{
+                const body={message:'Update checkin data',content:b64Encode(JSON.stringify(dataObj,null,2))};
+                if(dataObj._sha)body.sha=dataObj._sha;
+                const resp=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,{method:'PUT',headers:apiHeaders(),body:JSON.stringify(body)});
+                const rb=await resp.json();
+                if(!resp.ok){console.error('pushRemoteData:',rb);return{ok:false,error:rb.message||`HTTP ${resp.status}`,status:resp.status};}
+                return{ok:true,sha:rb.content?rb.content.sha:null};
+            }catch(e){console.error('pushRemoteData:',e);return{ok:false,error:e.message};}
+        }
+        function mergeData(local,remote){
+            const m={habits:[]};
+            const allIds=new Set();
+            (local.habits||[]).forEach(h=>allIds.add(h.id));
+            (remote.habits||[]).forEach(h=>allIds.add(h.id));
+            for(const id of allIds){
+                const lh=(local.habits||[]).find(h=>h.id===id)||{};
+                const rh=(remote.habits||[]).find(h=>h.id===id)||{};
+                const mergedH={
+                    id,name:rh.name||lh.name,icon:rh.icon||lh.icon,color:rh.color||lh.color,
+                    createdAt:rh.createdAt||lh.createdAt||new Date().toISOString(),
+                    checkins:Object.assign({},lh.checkins||{},rh.checkins||{}),
+                };
+                mergedH.bestStreak=Math.max(lh.bestStreak||0,rh.bestStreak||0,calcStreakFrom(mergedH.checkins));
+                m.habits.push(mergedH);
+            }
+            m.activeHabitId=remote.activeHabitId||local.activeHabitId||(m.habits[0]?m.habits[0].id:'default');
+            return m;
+        }
+        function prepareSyncPayload(localData){
+            return{habits:localData.habits,activeHabitId:localData.activeHabitId};
+        }
+        function updateSyncBadge(status){
+            const el=document.getElementById('syncBadge');
+            el.classList.remove('synced','error');
+            if(status==='synced'){el.innerHTML='<span class="dot"></span>已同步';el.classList.add('synced');}
+            else if(status==='error'){el.innerHTML='<span class="dot"></span>同步失败';el.classList.add('error');}
+            else if(status==='no_token'){el.innerHTML='<span class="dot"></span>未同步';}
+            else{el.innerHTML='<span class="dot"></span>同步中…';}
         }
 
-        async function fetchRemoteData() {
-            const token = getToken(); if (!token) return null;
-            try {
-                const resp = await fetch(
-                    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,
-                    { headers: apiHeaders(), cache: 'no-store' }
-                );
-                if (resp.status === 404) return { _notFound: true };
-                if (!resp.ok) {
-                    const body = await resp.text();
-                    throw new Error(`HTTP ${resp.status}: ${body.slice(0, 200)}`);
-                }
-                const j = await resp.json();
-                const raw = atob(j.content.replace(/\s/g, ''));
-                const obj = JSON.parse(raw);
-                obj._sha = j.sha;
-                return obj;
-            } catch (e) { console.error('fetchRemoteData:', e); return null; }
-        }
-
-        function b64Encode(str) {
-            const bytes = new TextEncoder().encode(str);
-            let binary = ''; for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-            return btoa(binary);
-        }
-
-        async function pushRemoteData(dataObj) {
-            const token = getToken(); if (!token) return { ok: false, error: 'no_token' };
-            try {
-                const body = { message: 'Update checkin data', content: b64Encode(JSON.stringify(dataObj, null, 2)) };
-                if (dataObj._sha) body.sha = dataObj._sha;
-                const resp = await fetch(
-                    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`,
-                    { method: 'PUT', headers: apiHeaders(), body: JSON.stringify(body) }
-                );
-                const respBody = await resp.json();
-                if (!resp.ok) { console.error('pushRemoteData:', respBody); return { ok: false, error: respBody.message || `HTTP ${resp.status}`, status: resp.status }; }
-                return { ok: true, sha: respBody.content ? respBody.content.sha : null };
-            } catch (e) { console.error('pushRemoteData:', e); return { ok: false, error: e.message }; }
-        }
-
-        function prepareSyncPayload(localData) {
-            return {
-                checkins: localData.checkins || {},
-                lastCheckinDate: localData.lastCheckinDate || null,
-                currentStreak: localData.currentStreak || 0,
-                bestStreak: localData.bestStreak || 0,
-                totalDays: localData.totalDays || 0,
+        // ==================== Data ====================
+        function migrateOldData(raw){
+            if(raw.habits)return raw;
+            return{
+                habits:[{
+                    id:'default',name:'自律打卡',icon:'💪',color:'#7c6ff7',
+                    createdAt:new Date().toISOString(),
+                    checkins:convertCheckins(raw.checkins||{}),
+                    bestStreak:raw.bestStreak||0,
+                }],
+                activeHabitId:'default',
             };
         }
-
-        function calcStreakFrom(checkins) {
-            const today = new Date();
-            const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-            // Find the most recent checkin date
-            let latestDate = null;
-            for (let i = 0; i < 3650; i++) {
-                const check = new Date(todayStart);
-                check.setDate(check.getDate() - i);
-                const key = dateKey(check.getFullYear(), check.getMonth() + 1, check.getDate());
-                if (checkins[key]) {
-                    latestDate = new Date(check.getFullYear(), check.getMonth(), check.getDate());
-                    break;
-                }
+        function convertCheckins(old){
+            const out={};
+            for(const[k,v]of Object.entries(old)){
+                out[k]=typeof v==='object'?v:{time:'',note:''};
             }
-
-            if (!latestDate) return 0;
-
-            // If the latest checkin is more than 1 day before today, streak is broken
-            const diffDays = Math.round((todayStart - latestDate) / (1000 * 60 * 60 * 24));
-            if (diffDays > 1) return 0;
-
-            // Count consecutive days backward from latest checkin
-            let streak = 0;
-            for (let i = 0; i < 3650; i++) {
-                const check = new Date(latestDate);
-                check.setDate(check.getDate() - i);
-                const key = dateKey(check.getFullYear(), check.getMonth() + 1, check.getDate());
-                if (checkins[key]) streak++;
-                else break;
-            }
-            return streak;
+            return out;
         }
-
-        function mergeData(existing, incoming) {
-            const merged = {
-                checkins: Object.assign({}, existing.checkins || {}, incoming.checkins || {}),
-                lastCheckinDate: (existing.lastCheckinDate || '') > (incoming.lastCheckinDate || '') ? existing.lastCheckinDate : incoming.lastCheckinDate,
-            };
-            merged.totalDays = Object.keys(merged.checkins).length;
-            merged.currentStreak = calcStreakFrom(merged.checkins);
-            merged.bestStreak = Math.max(existing.bestStreak || 0, incoming.bestStreak || 0, merged.currentStreak);
-            return merged;
+        function loadLocalData(){
+            try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)return migrateOldData(JSON.parse(raw));}catch(e){}
+            return{habits:[{id:'default',name:'自律打卡',icon:'💪',color:'#7c6ff7',createdAt:new Date().toISOString(),checkins:{},bestStreak:0}],activeHabitId:'default'};
         }
+        function saveLocalData(obj){localStorage.setItem(STORAGE_KEY,JSON.stringify(obj));}
 
-        function updateSyncBadge(status) {
-            const el = document.getElementById('syncBadge');
-            el.classList.remove('synced', 'error');
-            if (status === 'synced') { el.innerHTML = '<span class="dot"></span>已同步'; el.classList.add('synced'); }
-            else if (status === 'error') { el.innerHTML = '<span class="dot"></span>同步失败'; el.classList.add('error'); }
-            else if (status === 'no_token') { el.innerHTML = '<span class="dot"></span>未同步'; }
-            else { el.innerHTML = '<span class="dot"></span>同步中…'; }
+        let data=loadLocalData();
+        let calendarYear=new Date().getFullYear(),calendarMonth=new Date().getMonth()+1;
+
+        function activeHabit(){
+            let h=data.habits.find(h=>h.id===data.activeHabitId);
+            if(!h&&data.habits.length>0){h=data.habits[0];data.activeHabitId=h.id;}
+            return h;
         }
+        function activeCheckins(){return(activeHabit()||{}).checkins||{};}
 
-        // ==================== Local Data ====================
-        function loadLocalData() {
-            try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
-            return { checkins: {}, currentStreak: 0, bestStreak: 0, totalDays: 0, lastCheckinDate: null };
-        }
-        function saveLocalData(obj) { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
-
-        let data = loadLocalData();
-        let calendarYear = new Date().getFullYear();
-        let calendarMonth = new Date().getMonth() + 1;
-
-        async function syncOnLoad() {
-            const token = getToken(); if (!token) { updateSyncBadge('no_token'); return; }
-            const remote = await fetchRemoteData();
-            if (!remote) { updateSyncBadge('error'); return; }
-            if (remote._notFound) { updateSyncBadge('synced'); return; }
-            // Remote is authoritative on load — replace local entirely
+        async function syncOnLoad(){
+            const token=getToken();if(!token){updateSyncBadge('no_token');return;}
+            const remote=await fetchRemoteData();
+            if(!remote){updateSyncBadge('error');return;}
+            if(remote._notFound){updateSyncBadge('synced');return;}
             delete remote._sha;
-            data = remote;
-            recalcStats();
-            saveLocalData(data);
-            updateUI();
-            updateSyncBadge('synced');
+            data=migrateOldData(remote);
+            saveLocalData(data);updateUI();updateSyncBadge('synced');
         }
-
-        async function syncAfterChange() {
-            const token = getToken(); if (!token) { updateSyncBadge('no_token'); return; }
-            let remote = await fetchRemoteData();
-            if (!remote) { updateSyncBadge('error'); showToast('同步失败：无法连接 GitHub API'); return; }
-            const payload = prepareSyncPayload(data);
-            if (!remote._notFound) {
-                const merged = mergeData(remote, payload); merged._sha = remote._sha;
-                let result = await pushRemoteData(merged);
-                if (result.ok) { updateSyncBadge('synced'); return; }
-                if (result.status === 409) {
-                    remote = await fetchRemoteData();
-                    if (remote && !remote._notFound) {
-                        const merged2 = mergeData(remote, payload); merged2._sha = remote._sha;
-                        const retry = await pushRemoteData(merged2);
-                        if (retry.ok) { updateSyncBadge('synced'); return; }
-                    }
+        async function syncAfterChange(){
+            const token=getToken();if(!token){updateSyncBadge('no_token');return;}
+            let remote=await fetchRemoteData();
+            if(!remote){updateSyncBadge('error');showToast('同步失败：无法连接 GitHub API');return;}
+            const payload=prepareSyncPayload(data);
+            if(!remote._notFound){
+                const merged=mergeData(payload,remote);merged._sha=remote._sha;
+                let result=await pushRemoteData(merged);
+                if(result.ok){updateSyncBadge('synced');return;}
+                if(result.status===409){
+                    remote=await fetchRemoteData();
+                    if(remote&&!remote._notFound){const m2=mergeData(payload,remote);m2._sha=remote._sha;const r2=await pushRemoteData(m2);if(r2.ok){updateSyncBadge('synced');return;}}
                 }
-                updateSyncBadge('error'); showToast('同步失败：' + (result.error || '请检查 Token 权限'));
-            } else {
-                const result = await pushRemoteData(payload);
-                if (result.ok) { updateSyncBadge('synced'); }
-                else { updateSyncBadge('error'); showToast('同步失败：' + (result.error || '请检查 Token 权限')); }
+                updateSyncBadge('error');showToast('同步失败：'+(result.error||'请检查 Token 权限'));
+            }else{
+                const result=await pushRemoteData(payload);
+                updateSyncBadge(result.ok?'synced':'error');
+                if(!result.ok)showToast('同步失败：'+(result.error||'请检查 Token 权限'));
             }
         }
 
         // ==================== Helpers ====================
-        function todayKey() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-        function dateKey(y, m, d) { return `${y}-${pad(m)}-${pad(d)}`; }
-        function pad(n) { return String(n).padStart(2, '0'); }
+        function todayKey(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+        function dateKey(y,m,d){return `${y}-${pad(m)}-${pad(d)}`;}
+        function pad(n){return String(n).padStart(2,'0');}
+        function isChecked(k){return!!activeCheckins()[k];}
+        function getNote(k){const c=activeCheckins()[k];return(c&&typeof c==='object'&&c.note)?c.note:'';}
+        function getCheckinTime(k){const c=activeCheckins()[k];return(c&&typeof c==='object'&&c.time)?c.time:'';}
 
-        // ==================== Beijing Time ====================
-        function updateClock() {
-            const now = new Date();
-            const bj = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
-            const parts = bj.match(/(\d{4}\/\d{1,2}\/\d{1,2})\s(\d{1,2}:\d{2}:\d{2})/);
-            document.getElementById('timeDisplay').textContent = '北京时间 ' + (parts ? parts[2] : '--');
-            const bjDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-            document.getElementById('weekdayDisplay').textContent = '星期' + ['日','一','二','三','四','五','六'][bjDate.getDay()];
-        }
-        updateClock(); setInterval(updateClock, 1000);
-
-        // ==================== Rotating Quotes ====================
-        (function() {
-            const quotes = [
-                '自律即自由', '每一天都是新的开始', '千里之行，始于足下', '自律是最强者的本能',
-                '不积跬步，无以至千里', '战胜自己，才是真正的胜利', '习惯决定命运',
-                '与其仰望星空，不如脚踏实地', '你的坚持，终将美好', '做自己的主人',
-                '意志力是成功的基石', '坚持就是胜利', '行动是治愈恐惧的良药',
-                '今天的选择决定明天的你', '不放弃，就有希望', '自律带来真正的自由',
-                '每一次克制，都是一次成长', '心之所向，身之所往', '自胜者强，自强者胜',
-                '修身在正其心', '君子慎独', '不欺暗室', '守心如城', '克己复礼',
-                '吾日三省吾身', '静以修身，俭以养德', '非淡泊无以明志，非宁静无以致远',
-                '天行健，君子以自强不息', '地势坤，君子以厚德载物',
-                '路漫漫其修远兮，吾将上下而求索', '锲而不舍，金石可镂',
-                '宝剑锋从磨砺出，梅花香自苦寒来', '千磨万击还坚劲，任尔东西南北风',
-                '有志者，事竟成', '水滴石穿，绳锯木断', '勿以善小而不为',
-                '见贤思齐焉，见不贤而内自省也', '三军可夺帅也，匹夫不可夺志也',
-                '岁寒，然后知松柏之后凋也', '莫见乎隐，莫显乎微',
-                '知止而后有定，定而后能静', '欲修其身者，先正其心',
-                '心若冰清，天塌不惊', '念念不忘，必有回响',
-                '熬过无人问津的日子，才有诗和远方', '你所坚持的，总有一天会反过来拥抱你',
-                '自律的前期是兴奋，中期是痛苦，后期是享受', '能控制自己的人，才能控制人生',
-                '你的努力，时间看得见', '真正的高贵是优于过去的自己',
-                '人生最大的敌人是自己', '千里之堤，溃于蚁穴',
-                '知行合一', '业精于勤，荒于嬉', '行百里者半九十',
-                '学如逆水行舟，不进则退', '少壮不努力，老大徒伤悲',
-                '盛年不重来，一日难再晨', '及时当勉励，岁月不待人',
-                '不经一番寒彻骨，怎得梅花扑鼻香', '长风破浪会有时，直挂云帆济沧海',
-                '天生我材必有用', '山重水复疑无路，柳暗花明又一村',
-                '会当凌绝顶，一览众山小', '欲穷千里目，更上一层楼',
-                '老骥伏枥，志在千里', '烈士暮年，壮心不已',
-                '穷且益坚，不坠青云之志', '宁为玉碎，不为瓦全',
-                '人生自古谁无死，留取丹心照汗青', '先天下之忧而忧，后天下之乐而乐',
-                '苟利国家生死以，岂因祸福避趋之', '为天地立心，为生民立命',
-                '天下兴亡，匹夫有责', '位卑未敢忘忧国',
-                '纸上得来终觉浅，绝知此事要躬行', '问渠那得清如许，为有源头活水来',
-                '读书破万卷，下笔如有神', '腹有诗书气自华',
-                '博观而约取，厚积而薄发', '温故而知新，可以为师矣',
-                '学而不思则罔，思而不学则殆', '敏而好学，不耻下问',
-                '三人行，必有我师焉', '择其善者而从之，其不善者而改之',
-                '知之者不如好之者，好之者不如乐之者', '朝闻道，夕死可矣',
-                '士不可以不弘毅，任重而道远', '己所不欲，勿施于人',
-                '德不孤，必有邻', '君子坦荡荡，小人长戚戚',
-                '言必信，行必果', '人无远虑，必有近忧',
-                '小不忍则乱大谋', '工欲善其事，必先利其器',
-                '千里之行，始于足下', '合抱之木，生于毫末',
-                '九层之台，起于累土', '天下难事，必作于易',
-                '天下大事，必作于细', '大智若愚，大巧若拙',
-                '上善若水，水善利万物而不争', '知人者智，自知者明',
-                '胜人者有力，自胜者强', '知足者富，强行者有志',
-                '祸兮福之所倚，福兮祸之所伏', '慎终如始，则无败事',
-                '海纳百川，有容乃大', '壁立千仞，无欲则刚',
-                '不以物喜，不以己悲', '宠辱不惊，看庭前花开花落',
-                '去留无意，望天上云卷云舒', '淡泊以明志，宁静以致远',
-                '心安茅屋稳，性定菜根香', '采菊东篱下，悠然见南山',
-                '此中有真意，欲辨已忘言', '行到水穷处，坐看云起时',
-                '空山新雨后，天气晚来秋', '明月松间照，清泉石上流',
-                '大漠孤烟直，长河落日圆', '落霞与孤鹜齐飞，秋水共长天一色',
-                '不畏浮云遮望眼，自缘身在最高层', '沉舟侧畔千帆过，病树前头万木春',
-                '山不在高，有仙则名', '水不在深，有龙则灵',
-                '斯是陋室，惟吾德馨', '出淤泥而不染，濯清涟而不妖',
-                '桃李不言，下自成蹊', '十年磨一剑，霜刃未曾试',
-                '大鹏一日同风起，扶摇直上九万里', '仰天大笑出门去，我辈岂是蓬蒿人',
-                '千淘万漉虽辛苦，吹尽狂沙始到金', '看似寻常最奇崛，成如容易却艰辛',
-                '文章本天成，妙手偶得之', '一语天然万古新，豪华落尽见真淳',
-                '最大的荣耀不在于从不跌倒，而在于每次跌倒后都能爬起来',
-                '改变自己能改变的，接受自己不能改变的',
-                '真正的自由不是想做什么就做什么，而是不想做什么就不做什么',
-                '种一棵树最好的时间是十年前，其次是现在',
-                '今天是你余生中最年轻的一天',
-                '优秀是一种习惯', '我们重复做的事造就了我们',
-                '自律是桥梁，连接目标与成就', '忍耐是痛苦的，但果实是甘甜的',
-                '不要等待，时机永远不会恰到好处', '成功的秘诀在于坚持自己的目标',
-                '力量并非来自体能，而是来自不屈的意志', '内心的平静始于不再让他人控制你的情绪',
-                '伟大不是天生的，而是被逼出来的', '最困难的时候，往往离成功不远',
-                '不是因为看到希望才坚持，而是因为坚持才看到希望',
-                '生活不是等待暴风雨过去，而是学会在雨中起舞',
-                '你所浪费的今天，是昨天死去的人奢望的明天',
-                '世上只有一种英雄主义，就是认清了生活的真相后依然热爱它',
-                '当你凝视深渊时，深渊也在凝视你', '杀不死我的，只会让我更强大',
-                '一个人知道自己为什么而活，就可以忍受任何一种生活',
-                '世界以痛吻我，要我报之以歌', '你若爱，生活哪里都可爱',
-                '不乱于心，不困于情，不畏将来，不念过往', '如此，安好',
-            ];
-            let idx = Math.floor(Math.random() * quotes.length);
-            const subtitleEl = document.getElementById('subtitle');
-            const quoteEl = document.getElementById('quoteText');
-            subtitleEl.textContent = quotes[idx];
-            quoteEl.textContent = '「' + quotes[idx] + '」';
-
-            function nextQuote() {
-                subtitleEl.classList.add('fade');
-                quoteEl.classList.add('fade');
-                setTimeout(() => {
-                    idx = (idx + 1) % quotes.length;
-                    subtitleEl.textContent = quotes[idx];
-                    subtitleEl.classList.remove('fade');
-                    quoteEl.textContent = '「' + quotes[idx] + '」';
-                    quoteEl.classList.remove('fade');
-                }, 500);
+        function calcStreakFrom(checkins){
+            const today=new Date(),todayStart=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+            let latestDate=null;
+            for(let i=0;i<3650;i++){
+                const check=new Date(todayStart);check.setDate(check.getDate()-i);
+                if(checkins[dateKey(check.getFullYear(),check.getMonth()+1,check.getDate())]){latestDate=new Date(check.getFullYear(),check.getMonth(),check.getDate());break;}
             }
-            setInterval(nextQuote, 10000);
+            if(!latestDate)return 0;
+            const diffDays=Math.round((todayStart-latestDate)/(1000*60*60*24));
+            if(diffDays>1)return 0;
+            let streak=0;
+            for(let i=0;i<3650;i++){
+                const check=new Date(latestDate);check.setDate(check.getDate()-i);
+                if(checkins[dateKey(check.getFullYear(),check.getMonth()+1,check.getDate())])streak++;else break;
+            }
+            return streak;
+        }
+
+        // ==================== Clock & Countdown ====================
+        function updateClock(){
+            const now=new Date();
+            const bj=now.toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false});
+            const parts=bj.match(/(\d{4}\/\d{1,2}\/\d{1,2})\s(\d{1,2}:\d{2}:\d{2})/);
+            document.getElementById('timeDisplay').textContent='北京时间 '+(parts?parts[2]:'--');
+            const bjDate=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Shanghai'}));
+            document.getElementById('weekdayDisplay').textContent='星期'+['日','一','二','三','四','五','六'][bjDate.getDay()];
+            const endOfDay=new Date(bjDate);endOfDay.setHours(23,59,59,999);
+            const remaining=endOfDay-bjDate;
+            const h=Math.floor(remaining/3600000),m=Math.floor((remaining%3600000)/60000);
+            document.getElementById('countdownDisplay').textContent=`距今日结束 ${h}时${m}分`;
+        }
+        updateClock();setInterval(updateClock,60000);
+
+        // ==================== Quotes ====================
+        (function(){
+            const quotes=['自律即自由','每一天都是新的开始','千里之行，始于足下','自律是最强者的本能','不积跬步，无以至千里','战胜自己，才是真正的胜利','习惯决定命运','与其仰望星空，不如脚踏实地','你的坚持，终将美好','做自己的主人','意志力是成功的基石','坚持就是胜利','行动是治愈恐惧的良药','今天的选择决定明天的你','不放弃，就有希望','自律带来真正的自由','每一次克制，都是一次成长','心之所向，身之所往','自胜者强，自强者胜','修身在正其心','君子慎独','不欺暗室','守心如城','克己复礼','吾日三省吾身','静以修身，俭以养德','非淡泊无以明志，非宁静无以致远','天行健，君子以自强不息','地势坤，君子以厚德载物','路漫漫其修远兮，吾将上下而求索','锲而不舍，金石可镂','宝剑锋从磨砺出，梅花香自苦寒来','千磨万击还坚劲，任尔东西南北风','有志者，事竟成','水滴石穿，绳锯木断','勿以善小而不为','见贤思齐焉，见不贤而内自省也','三军可夺帅也，匹夫不可夺志也','岁寒，然后知松柏之后凋也','莫见乎隐，莫显乎微','知止而后有定，定而后能静','欲修其身者，先正其心','心若冰清，天塌不惊','念念不忘，必有回响','熬过无人问津的日子，才有诗和远方','你所坚持的，总有一天会反过来拥抱你','自律的前期是兴奋，中期是痛苦，后期是享受','能控制自己的人，才能控制人生','你的努力，时间看得见','真正的高贵是优于过去的自己','人生最大的敌人是自己','千里之堤，溃于蚁穴','知行合一','业精于勤，荒于嬉','行百里者半九十','学如逆水行舟，不进则退','少壮不努力，老大徒伤悲','盛年不重来，一日难再晨','及时当勉励，岁月不待人','不经一番寒彻骨，怎得梅花扑鼻香','长风破浪会有时，直挂云帆济沧海','天生我材必有用','山重水复疑无路，柳暗花明又一村','会当凌绝顶，一览众山小','欲穷千里目，更上一层楼','老骥伏枥，志在千里','烈士暮年，壮心不已','穷且益坚，不坠青云之志','宁为玉碎，不为瓦全','人生自古谁无死，留取丹心照汗青','先天下之忧而忧，后天下之乐而乐','苟利国家生死以，岂因祸福避趋之','为天地立心，为生民立命','天下兴亡，匹夫有责','位卑未敢忘忧国','纸上得来终觉浅，绝知此事要躬行','问渠那得清如许，为有源头活水来','读书破万卷，下笔如有神','腹有诗书气自华','博观而约取，厚积而薄发','温故而知新，可以为师矣','学而不思则罔，思而不学则殆','敏而好学，不耻下问','三人行，必有我师焉','择其善者而从之，其不善者而改之','知之者不如好之者，好之者不如乐之者','朝闻道，夕死可矣','士不可以不弘毅，任重而道远','己所不欲，勿施于人','德不孤，必有邻','君子坦荡荡，小人长戚戚','言必信，行必果','人无远虑，必有近忧','小不忍则乱大谋','工欲善其事，必先利其器','合抱之木，生于毫末','九层之台，起于累土','天下难事，必作于易','天下大事，必作于细','大智若愚，大巧若拙','上善若水，水善利万物而不争','知人者智，自知者明','胜人者有力，自胜者强','知足者富，强行者有志','祸兮福之所倚，福兮祸之所伏','慎终如始，则无败事','海纳百川，有容乃大','壁立千仞，无欲则刚','不以物喜，不以己悲','宠辱不惊，看庭前花开花落','去留无意，望天上云卷云舒','淡泊以明志，宁静以致远','心安茅屋稳，性定菜根香','采菊东篱下，悠然见南山','此中有真意，欲辨已忘言','行到水穷处，坐看云起时','空山新雨后，天气晚来秋','明月松间照，清泉石上流','大漠孤烟直，长河落日圆','落霞与孤鹜齐飞，秋水共长天一色','不畏浮云遮望眼，自缘身在最高层','沉舟侧畔千帆过，病树前头万木春','山不在高，有仙则名','水不在深，有龙则灵','斯是陋室，惟吾德馨','出淤泥而不染，濯清涟而不妖','桃李不言，下自成蹊','十年磨一剑，霜刃未曾试','大鹏一日同风起，扶摇直上九万里','仰天大笑出门去，我辈岂是蓬蒿人','千淘万漉虽辛苦，吹尽狂沙始到金','看似寻常最奇崛，成如容易却艰辛','最大的荣耀不在于从不跌倒，而在于每次跌倒后都能爬起来','改变自己能改变的，接受自己不能改变的','真正的自由不是想做什么就做什么，而是不想做什么就不做什么','种一棵树最好的时间是十年前，其次是现在','今天是你余生中最年轻的一天','优秀是一种习惯','我们重复做的事造就了我们','自律是桥梁，连接目标与成就','忍耐是痛苦的，但果实是甘甜的','不要等待，时机永远不会恰到好处','成功的秘诀在于坚持自己的目标','力量并非来自体能，而是来自不屈的意志','内心的平静始于不再让他人控制你的情绪','伟大不是天生的，而是被逼出来的','最困难的时候，往往离成功不远','不是因为看到希望才坚持，而是因为坚持才看到希望','生活不是等待暴风雨过去，而是学会在雨中起舞','你所浪费的今天，是昨天死去的人奢望的明天','世上只有一种英雄主义，就是认清了生活的真相后依然热爱它','当你凝视深渊时，深渊也在凝视你','杀不死我的，只会让我更强大','一个人知道自己为什么而活，就可以忍受任何一种生活','世界以痛吻我，要我报之以歌','你若爱，生活哪里都可爱','不乱于心，不困于情，不畏将来，不念过往','如此，安好'];
+            let idx=Math.floor(Math.random()*quotes.length);
+            const sEl=document.getElementById('subtitle'),qEl=document.getElementById('quoteText');
+            sEl.textContent=quotes[idx];qEl.textContent='「'+quotes[idx]+'」';
+            function nextQuote(){
+                sEl.classList.add('fade');qEl.classList.add('fade');
+                setTimeout(()=>{idx=(idx+1)%quotes.length;sEl.textContent=quotes[idx];sEl.classList.remove('fade');qEl.textContent='「'+quotes[idx]+'」';qEl.classList.remove('fade');},500);
+            }
+            setInterval(nextQuote,10000);
         })();
 
         // ==================== Theme ====================
-        function applyTheme(mode) {
-            const body = document.body;
-            body.classList.remove('theme-dark', 'theme-light');
-            ['themeAuto','themeLight','themeDark'].forEach(id => document.getElementById(id).classList.remove('active'));
-            if (mode === 'auto') {
-                const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                body.classList.add(dark ? 'theme-dark' : 'theme-light');
-                document.getElementById('themeAuto').classList.add('active');
-            } else if (mode === 'light') {
-                body.classList.add('theme-light'); document.getElementById('themeLight').classList.add('active');
-            } else {
-                body.classList.add('theme-dark'); document.getElementById('themeDark').classList.add('active');
-            }
+        function applyTheme(mode){
+            const body=document.body;body.classList.remove('theme-dark','theme-light');
+            ['themeAuto','themeLight','themeDark'].forEach(id=>document.getElementById(id).classList.remove('active'));
+            if(mode==='auto'){const dark=window.matchMedia('(prefers-color-scheme:dark)').matches;body.classList.add(dark?'theme-dark':'theme-light');document.getElementById('themeAuto').classList.add('active');}
+            else if(mode==='light'){body.classList.add('theme-light');document.getElementById('themeLight').classList.add('active');}
+            else{body.classList.add('theme-dark');document.getElementById('themeDark').classList.add('active');}
         }
-        function setTheme(mode) { localStorage.setItem(THEME_KEY, mode); applyTheme(mode); }
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            if ((localStorage.getItem(THEME_KEY) || 'auto') === 'auto') applyTheme('auto');
-        });
-        applyTheme(localStorage.getItem(THEME_KEY) || 'auto');
+        function setTheme(mode){localStorage.setItem(THEME_KEY,mode);applyTheme(mode);}
+        window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{if((localStorage.getItem(THEME_KEY)||'auto')==='auto')applyTheme('auto');});
+        applyTheme(localStorage.getItem(THEME_KEY)||'auto');
 
-        // ==================== Token Modal ====================
-        function showTokenModal() { document.getElementById('tokenInput').value = getToken(); document.getElementById('tokenModal').classList.add('active'); }
-        function hideTokenModal() { document.getElementById('tokenModal').classList.remove('active'); }
-        function saveToken() {
-            const val = document.getElementById('tokenInput').value.trim();
-            if (!val || !val.startsWith('ghp_')) { showToast('Token 格式不正确，应以 ghp_ 开头'); return; }
-            localStorage.setItem(TOKEN_KEY, val);
-            hideTokenModal();
-            showToast('Token 已保存，正在同步…');
-            syncOnLoad().then(() => {
-                const badge = document.getElementById('syncBadge');
-                if (badge.classList.contains('synced')) showToast('✅ 同步成功！');
-                else showToast('同步失败，请检查 Token 权限');
-            });
+        // ==================== Habit Management ====================
+        let editingHabitId=null;
+        function renderHabitTabs(){
+            const container=document.getElementById('habitTabs');
+            let html='';
+            for(const h of data.habits){
+                const active=h.id===data.activeHabitId;
+                html+=`<div class="habit-tab${active?' active':''}" onclick="switchHabit('${h.id}')">${h.icon} ${h.name}</div>`;
+            }
+            html+=`<button class="habit-add" onclick="showHabitModal()" title="新建习惯">+</button>`;
+            container.innerHTML=html;
+        }
+        function switchHabit(id){
+            data.activeHabitId=id;saveLocalData(data);
+            renderHabitTabs();updateUI();
+        }
+        function showHabitModal(editId){
+            editingHabitId=editId||null;
+            const modal=document.getElementById('habitModal');
+            document.getElementById('habitModalTitle').textContent=editId?'编辑习惯':'新建习惯';
+            const h=editId?data.habits.find(h=>h.id===editId):null;
+            document.getElementById('habitNameInput').value=h?h.name:'';
+            renderEmojiPicker(h?h.icon:null);
+            renderColorPicker(h?h.color:null);
+            modal.classList.add('active');
+        }
+        function hideHabitModal(){document.getElementById('habitModal').classList.remove('active');editingHabitId=null;}
+        function renderEmojiPicker(selected){
+            const grid=document.getElementById('emojiGrid');
+            let html='';
+            for(const e of HABIT_EMOJIS)html+=`<div class="emoji-opt${e===selected?' selected':''}" onclick="selectEmoji(this,'${e}')">${e}</div>`;
+            grid.innerHTML=html;grid.dataset.selected=selected||HABIT_EMOJIS[0];
+        }
+        function selectEmoji(el,emoji){
+            document.querySelectorAll('.emoji-opt').forEach(e=>e.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('emojiGrid').dataset.selected=emoji;
+        }
+        function renderColorPicker(selected){
+            const wrap=document.getElementById('colorPresets');
+            let html='';
+            for(const c of HABIT_COLORS)html+=`<div class="color-opt${c===selected?' selected':''}" style="background:${c}" onclick="selectColor(this,'${c}')"></div>`;
+            wrap.innerHTML=html;wrap.dataset.selected=selected||HABIT_COLORS[0];
+        }
+        function selectColor(el,color){
+            document.querySelectorAll('.color-opt').forEach(e=>e.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('colorPresets').dataset.selected=color;
+        }
+        function saveHabit(){
+            const name=document.getElementById('habitNameInput').value.trim();
+            if(!name){showToast('请输入习惯名称');return;}
+            const icon=document.getElementById('emojiGrid').dataset.selected||HABIT_EMOJIS[0];
+            const color=document.getElementById('colorPresets').dataset.selected||HABIT_COLORS[0];
+            if(editingHabitId){
+                const h=data.habits.find(h=>h.id===editingHabitId);
+                if(h){h.name=name;h.icon=icon;h.color=color;}
+            }else{
+                const id='habit_'+Date.now();
+                data.habits.push({id,name,icon,color,createdAt:new Date().toISOString(),checkins:{},bestStreak:0});
+            }
+            if(!data.habits.find(h=>h.id===data.activeHabitId))data.activeHabitId=data.habits[0].id;
+            saveLocalData(data);hideHabitModal();renderHabitTabs();updateUI();syncAfterChange();
+        }
+        async function deleteHabit(id){
+            if(data.habits.length<=1){showToast('至少保留一个习惯');return;}
+            data.habits=data.habits.filter(h=>h.id!==id);
+            if(data.activeHabitId===id)data.activeHabitId=data.habits[0].id;
+            saveLocalData(data);renderHabitTabs();updateUI();syncAfterChange();
         }
 
         // ==================== Checkin ====================
-        function checkin() {
-            const key = todayKey();
-            if (data.checkins[key]) { showToast('今日已打卡，明天继续加油！'); return; }
-            data.checkins[key] = true;
-            data.lastCheckinDate = key;
-            data.currentStreak = calcStreakFrom(data.checkins);
-            data.totalDays = Object.keys(data.checkins).length;
-            if (data.currentStreak > data.bestStreak) data.bestStreak = data.currentStreak;
-            saveLocalData(data);
-            updateUI();
-            animateNumber();
-            syncAfterChange();
-            showToast('打卡成功！坚持就是胜利！');
+        function checkin(){
+            const key=todayKey();const habit=activeHabit();if(!habit)return;
+            if(isChecked(key)){showToast('今日已打卡，明天继续加油！');return;}
+            const now=new Date();
+            const bj=now.toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false});
+            const timePart=bj.match(/\s(\d{2}:\d{2})/)?.[1]||'';
+            habit.checkins[key]={time:timePart,note:''};
+            habit.bestStreak=Math.max(habit.bestStreak||0,calcStreakFrom(habit.checkins));
+            saveLocalData(data);updateUI();animateNumber();playCheckinSound();spawnConfetti();
+            document.getElementById('noteArea').style.display='flex';
+            document.getElementById('noteInput').value='';document.getElementById('noteInput').focus();
+            syncAfterChange();showToast('🎉 打卡成功！坚持就是胜利！');
+        }
+        function saveNote(){
+            const key=todayKey();const habit=activeHabit();if(!habit||!isChecked(key))return;
+            const note=document.getElementById('noteInput').value.trim();
+            if(typeof habit.checkins[key]==='object')habit.checkins[key].note=note;
+            saveLocalData(data);updateUI();syncAfterChange();showToast('备注已保存');
         }
 
-        async function resetAllData() {
-            data = { checkins: {}, currentStreak: 0, bestStreak: 0, totalDays: 0, lastCheckinDate: null };
-            saveLocalData(data);
-            hideResetModal();
-            updateUI();
-
-            // Push empty data directly — don't merge with remote
-            const token = getToken();
-            if (token) {
-                const remote = await fetchRemoteData();
-                const payload = prepareSyncPayload(data);
-                if (remote && !remote._notFound) payload._sha = remote._sha;
-                const result = await pushRemoteData(payload);
-                updateSyncBadge(result.ok ? 'synced' : 'error');
-            } else {
-                updateSyncBadge('no_token');
-            }
+        async function resetAllData(){
+            data={habits:[{id:'default',name:'自律打卡',icon:'💪',color:'#7c6ff7',createdAt:new Date().toISOString(),checkins:{},bestStreak:0}],activeHabitId:'default'};
+            saveLocalData(data);hideResetModal();updateUI();
+            const token=getToken();
+            if(token){const remote=await fetchRemoteData();const payload=prepareSyncPayload(data);if(remote&&!remote._notFound)payload._sha=remote._sha;const r=await pushRemoteData(payload);updateSyncBadge(r.ok?'synced':'error');}
+            else updateSyncBadge('no_token');
             showToast('所有数据已清除');
         }
-        function showResetModal() { document.getElementById('resetModal').classList.add('active'); }
-        function hideResetModal() { document.getElementById('resetModal').classList.remove('active'); }
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg; toast.classList.add('show');
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2200);
-        }
-        function animateNumber() {
-            const el = document.getElementById('streakNumber');
-            el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+        function showResetModal(){document.getElementById('resetModal').classList.add('active');}
+        function hideResetModal(){document.getElementById('resetModal').classList.remove('active');}
+        function showToast(msg){const toast=document.getElementById('toast');toast.textContent=msg;toast.classList.add('show');clearTimeout(toast._timeout);toast._timeout=setTimeout(()=>toast.classList.remove('show'),2200);}
+        function animateNumber(){const el=document.getElementById('streakNumber');el.classList.remove('pulse');void el.offsetWidth;el.classList.add('pulse');}
+
+        function getMotivationalMessage(streak){
+            if(streak===0)return'从今天开始，迈出第一步吧';if(streak<=3)return'万事开头难，你已经很棒了！';if(streak<=7)return'一周是一个里程碑，继续坚持！';if(streak<=14)return'两周了，自律正在成为习惯 💪';if(streak<=21)return'21天养成一个习惯，你做到了！';if(streak<=30)return'满月！你的意志力远超常人 🔥';if(streak<=60)return'两个月，新的生活方式已经形成';if(streak<=90)return'90天！这是真正的蜕变 ✨';if(streak<=180)return'半年坚守，你已脱胎换骨 🌟';if(streak<=365)return'一年之约，你是自己的英雄 🏆';return'传奇仍在继续，致敬强大的内心 👑';
         }
 
-        function getMotivationalMessage(streak) {
-            if (streak === 0) return '从今天开始，迈出第一步吧';
-            if (streak <= 3) return '万事开头难，你已经很棒了！';
-            if (streak <= 7) return '一周是一个里程碑，继续坚持！';
-            if (streak <= 14) return '两周了，自律正在成为习惯 💪';
-            if (streak <= 21) return '21天养成一个习惯，你做到了！';
-            if (streak <= 30) return '满月！你的意志力远超常人 🔥';
-            if (streak <= 60) return '两个月，新的生活方式已经形成';
-            if (streak <= 90) return '90天！这是真正的蜕变 ✨';
-            if (streak <= 180) return '半年坚守，你已脱胎换骨 🌟';
-            if (streak <= 365) return '一年之约，你是自己的英雄 🏆';
-            return '传奇仍在继续，致敬强大的内心 👑';
-        }
+        // ==================== UI ====================
+        function updateUI(){
+            const habit=activeHabit();const checkins=habit?habit.checkins:{};
+            const streak=calcStreakFrom(checkins);
+            const total=Object.keys(checkins).length;
+            const best=habit?habit.bestStreak||0:0;
 
-        function updateUI() {
-            const streak = data.currentStreak || 0;
-            const total = data.totalDays || 0;
-            const best = data.bestStreak || 0;
-            document.getElementById('streakNumber').textContent = streak;
-            document.getElementById('streakMessage').textContent = getMotivationalMessage(streak);
-            document.getElementById('currentStreak').textContent = streak;
-            document.getElementById('totalDays').textContent = total;
-            document.getElementById('bestStreak').textContent = best;
+            document.getElementById('streakNumber').textContent=streak;
+            document.getElementById('streakMessage').textContent=getMotivationalMessage(streak);
+            document.getElementById('currentStreak').textContent=streak;
+            document.getElementById('totalDays').textContent=total;
+            document.getElementById('bestStreak').textContent=best;
 
-            // Ring progress: max=365 for full circle
-            const circumference = 502.65;
-            const progress = Math.min(streak / 365, 1);
-            const offset = circumference * (1 - progress);
-            document.getElementById('ringFg').style.strokeDashoffset = offset;
+            const circumference=502.65,progress=Math.min(streak/365,1);
+            document.getElementById('ringFg').style.strokeDashoffset=circumference*(1-progress);
 
-            // Stage dots: milestones at 3,7,14,21,30,60,90,180,365
-            document.querySelectorAll('.stage-dot').forEach(dot => {
-                const at = parseInt(dot.dataset.at);
-                dot.classList.toggle('reached', streak >= at);
-            });
+            document.querySelectorAll('.stage-dot').forEach(dot=>{const at=parseInt(dot.dataset.at);dot.classList.toggle('reached',streak>=at);});
 
-            const key = todayKey();
-            const btn = document.getElementById('btnCheckin');
-            if (data.checkins[key]) {
-                btn.textContent = '✓ 今日已打卡'; btn.classList.add('checked'); btn.disabled = true;
-            } else {
-                btn.textContent = '今日打卡'; btn.classList.remove('checked'); btn.disabled = false;
-            }
-            renderCalendar();
-            renderWeekStrip();
+            const key=todayKey(),btn=document.getElementById('btnCheckin');
+            if(checkins[key]){btn.textContent='✓ 今日已打卡';btn.classList.add('checked');btn.disabled=true;}
+            else{btn.textContent='今日打卡';btn.classList.remove('checked');btn.disabled=false;}
+
+            // Note area
+            const noteArea=document.getElementById('noteArea');
+            if(checkins[key]){noteArea.style.display='flex';document.getElementById('noteInput').value=getNote(key);}
+            else{noteArea.style.display='none';}
+
+            renderHabitTabs();renderCalendar();renderWeekStrip();renderHeatmap();renderTimeDistribution();renderMonthComparison();
+            // Update ring stroke color based on active habit color
+            if(habit&&habit.color)document.getElementById('ringFg').style.stroke=habit.color;
         }
 
         // ==================== Calendar ====================
-        function renderCalendar() {
-            const y = calendarYear, m = calendarMonth;
-            document.getElementById('calendarTitle').textContent = `${y} 年 ${m} 月`;
-            const firstDay = new Date(y, m-1, 1).getDay();
-            const daysInMonth = new Date(y, m, 0).getDate();
-            const today = new Date(), todayK = todayKey();
-            const grid = document.getElementById('daysGrid');
-            let html = '';
-            for (let i = 0; i < firstDay; i++) html += '<div class="day-cell"></div>';
-            for (let d = 1; d <= daysInMonth; d++) {
-                const key = dateKey(y, m, d);
-                const isChecked = data.checkins[key];
-                const isToday = key === todayK;
-                const isFuture = new Date(y, m-1, d) > today;
-                let cls = 'day-cell';
-                if (isChecked) cls += ' checked';
-                if (isToday) cls += ' today';
-                if (isFuture && !isChecked) cls += ' future';
-                html += `<div class="${cls}">${d}</div>`;
+        function renderCalendar(){
+            const y=calendarYear,m=calendarMonth,checkins=activeCheckins();
+            document.getElementById('calendarTitle').textContent=`${y} 年 ${m} 月`;
+            const firstDay=new Date(y,m-1,1).getDay(),daysInMonth=new Date(y,m,0).getDate();
+            const today=new Date(),todayK=todayKey();
+            const grid=document.getElementById('daysGrid');
+            let html='';
+            for(let i=0;i<firstDay;i++)html+='<div class="day-cell"></div>';
+            for(let d=1;d<=daysInMonth;d++){
+                const k=dateKey(y,m,d),checked=checkins[k],isToday=k===todayK;
+                const isFuture=new Date(y,m-1,d)>today;
+                let cls='day-cell';
+                if(checked)cls+=' checked';
+                if(getNote(k))cls+=' has-note';
+                if(isToday)cls+=' today';
+                if(isFuture&&!checked)cls+=' future';
+                const title=checked?('打卡时间: '+(getCheckinTime(k)||'未知')+(getNote(k)?'\n备注: '+getNote(k):'')):'';
+                html+=`<div class="${cls}"${title?' title="'+title.replace(/"/g,'&quot;')+'"':''}>${d}</div>`;
             }
-            grid.innerHTML = html;
+            grid.innerHTML=html;
         }
-        function prevMonth() { calendarMonth--; if (calendarMonth < 1) { calendarMonth = 12; calendarYear--; } renderCalendar(); }
-        function nextMonth() { calendarMonth++; if (calendarMonth > 12) { calendarMonth = 1; calendarYear++; } renderCalendar(); }
+        function prevMonth(){calendarMonth--;if(calendarMonth<1){calendarMonth=12;calendarYear--;}renderCalendar();}
+        function nextMonth(){calendarMonth++;if(calendarMonth>12){calendarMonth=1;calendarYear++;}renderCalendar();}
 
-        function renderWeekStrip() {
-            const now = new Date();
-            const bj = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-            const dayOfWeek = bj.getDay(); // 0=Sun
-            // Monday of current week
-            const monday = new Date(bj);
-            monday.setDate(bj.getDate() - ((dayOfWeek + 6) % 7));
-            const strip = document.getElementById('weekStrip');
-            let html = '';
-            const labels = ['一','二','三','四','五','六','日'];
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(monday);
-                d.setDate(monday.getDate() + i);
-                const key = dateKey(d.getFullYear(), d.getMonth() + 1, d.getDate());
-                const done = data.checkins[key];
-                const isToday = key === todayKey();
-                // Use dd as label
-                const dd = d.getDate();
-                let cls = 'wday';
-                if (done) cls += ' done';
-                if (isToday) cls += ' today-w';
-                html += `<div class="${cls}">${dd}</div>`;
+        function renderWeekStrip(){
+            const now=new Date(),bj=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Shanghai'}));
+            const dayOfWeek=bj.getDay(),monday=new Date(bj);monday.setDate(bj.getDate()-((dayOfWeek+6)%7));
+            const strip=document.getElementById('weekStrip'),checkins=activeCheckins();
+            let html='';
+            for(let i=0;i<7;i++){
+                const d=new Date(monday);d.setDate(monday.getDate()+i);
+                const k=dateKey(d.getFullYear(),d.getMonth()+1,d.getDate());
+                const done=checkins[k],isToday=k===todayKey(),dd=d.getDate();
+                let cls='wday';if(done)cls+=' done';if(isToday)cls+=' today-w';
+                html+=`<div class="${cls}">${dd}</div>`;
             }
-            strip.innerHTML = html;
+            strip.innerHTML=html;
         }
 
-        document.getElementById('resetModal').addEventListener('click', function(e) { if (e.target === this) hideResetModal(); });
-        document.getElementById('tokenModal').addEventListener('click', function(e) { if (e.target === this) hideTokenModal(); });
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { hideResetModal(); hideTokenModal(); } });
+        // ==================== Heatmap ====================
+        function renderHeatmap(){
+            const checkins=activeCheckins(),now=new Date();
+            const yearStart=new Date(now.getFullYear(),0,1);
+            const yearEnd=new Date(now.getFullYear(),11,31);
+            const firstDay=yearStart.getDay();
 
-        // Init — always recalc streak from actual data on load
-        function recalcStats() {
-            data.currentStreak = calcStreakFrom(data.checkins);
-            data.totalDays = Object.keys(data.checkins).length;
-            if (data.currentStreak > data.bestStreak) data.bestStreak = data.currentStreak;
+            // Month labels
+            const months=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+            let labelHtml='';
+            // Calculate week positions for month labels
+            for(let m=0;m<12;m++){
+                const monthStart=new Date(now.getFullYear(),m,1);
+                const weekNum=Math.floor((monthStart-yearStart+firstDay*86400000)/(86400000*7));
+                labelHtml+=`<span style="flex:${m<11?weekWidth(m,now.getFullYear(),firstDay):'1'};text-align:left;">${months[m]}</span>`;
+            }
+            document.getElementById('heatmapLabels').innerHTML=months.map((lbl,i)=>{
+                const d=new Date(now.getFullYear(),i,1);
+                const daysSinceStart=Math.floor((d-yearStart)/(86400000));
+                const dayOfWeek=d.getDay();
+                const weekNum=Math.floor((daysSinceStart+firstDay)/7);
+                return `<span>${lbl}</span>`;
+            }).join('');
+
+            const wrap=document.getElementById('heatmapWrap');
+            let html='<div class="heatmap-weeks">';
+            let dayCount=0,weekHtml='';
+            // Fill in days before year start
+            for(let d=0;d<firstDay;d++)weekHtml+='<div class="heatmap-cell" style="visibility:hidden"></div>';
+            dayCount=firstDay;
+            const today=new Date(),todayK=todayKey();
+            for(let d=new Date(yearStart);d<=yearEnd;d.setDate(d.getDate()+1)){
+                const k=dateKey(d.getFullYear(),d.getMonth()+1,d.getDate());
+                const checked=checkins[k],isFuture=d>today;
+                let cls='heatmap-cell';
+                if(isFuture)cls+=' future-cell';
+                else if(checked)cls+=' l4';
+                const note=getNote(k),time=getCheckinTime(k);
+                const tip=checked?`${k} 已打卡${time?' '+time:''}${note?' '+note:''}`:k;
+                weekHtml+=`<div class="${cls}" data-tip="${tip}"></div>`;
+                dayCount++;
+                if(dayCount>=7){html+='<div class="heatmap-week">'+weekHtml+'</div>';weekHtml='';dayCount=0;}
+            }
+            if(dayCount>0){while(dayCount<7){weekHtml+='<div class="heatmap-cell" style="visibility:hidden"></div>';dayCount++;}html+='<div class="heatmap-week">'+weekHtml+'</div>';}
+            html+='</div>';
+            wrap.innerHTML=html;
+
+            // Tooltip
+            const tooltip=document.getElementById('heatmapTooltip');
+            wrap.querySelectorAll('.heatmap-cell[data-tip]').forEach(cell=>{
+                cell.addEventListener('mouseenter',e=>{tooltip.textContent=cell.dataset.tip;tooltip.style.opacity='1';});
+                cell.addEventListener('mousemove',e=>{tooltip.style.left=e.clientX+12+'px';tooltip.style.top=e.clientY-30+'px';});
+                cell.addEventListener('mouseleave',()=>{tooltip.style.opacity='0';});
+            });
         }
-        recalcStats();
-        syncOnLoad().then(() => { recalcStats(); updateUI(); });
-        if (!getToken()) updateUI();
+        function weekWidth(month,fullYear,firstDay){
+            // Not used, simplified
+            return 1;
+        }
+
+        // ==================== Time Distribution ====================
+        function renderTimeDistribution(){
+            const checkins=activeCheckins();
+            const buckets=new Array(6).fill(0);
+            // Buckets: 0-4, 4-8, 8-12, 12-16, 16-20, 20-24
+            const labels=['0-4时','4-8时','8-12时','12-16时','16-20时','20-24时'];
+            for(const[k,v]of Object.entries(checkins)){
+                const time=(v&&typeof v==='object'&&v.time)?v.time:'';
+                if(!time)continue;
+                const h=parseInt(time.split(':')[0]);
+                const idx=Math.min(Math.floor(h/4),5);
+                buckets[idx]++;
+            }
+            const max=Math.max(1,...buckets);
+            let html='';
+            for(let i=0;i<6;i++){
+                const pct=(buckets[i]/max)*100;
+                html+=`<div class="time-row"><span class="bar-label">${labels[i]}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span class="bar-count">${buckets[i]}</span></div>`;
+            }
+            document.getElementById('timeBars').innerHTML=html||'<div style="font-size:11px;color:var(--text-muted);text-align:center;">暂无数据</div>';
+        }
+
+        // ==================== Month Comparison ====================
+        function renderMonthComparison(){
+            const checkins=activeCheckins(),now=new Date();
+            const thisM=now.getMonth(),lastM=thisM===0?11:thisM-1;
+            const thisY=now.getFullYear(),lastY=thisM===0?now.getFullYear()-1:now.getFullYear();
+            let thisCount=0,lastCount=0;
+            for(const k of Object.keys(checkins)){
+                const[ky,km]=k.split('-').map(Number);
+                if(ky===thisY&&km===thisM+1)thisCount++;
+                if(ky===lastY&&km===lastM+1)lastCount++;
+            }
+            const daysInThis=new Date(thisY,thisM+1,0).getDate();
+            const daysInLast=new Date(lastY,lastM+1,0).getDate();
+            const thisPct=(thisCount/daysInThis)*100,lastPct=(lastCount/daysInLast)*100;
+            const change=lastCount?Math.round((thisCount-lastCount)/lastCount*100):(thisCount?100:0);
+            const changeCls=change>0?'up':'down';
+            const nowMonthLabel=`${thisY}年${thisM+1}月`;
+            const lastMonthLabel=`${lastY}年${lastM+1}月`;
+            const html=`
+                <div class="compare-item"><span class="cmp-label">本月</span><div class="cmp-bar-wrap"><div class="cmp-bar this-m" style="width:${Math.max(thisPct,8)}%">${thisCount}天</div></div></div>
+                <div class="compare-item"><span class="cmp-label">上月</span><div class="cmp-bar-wrap"><div class="cmp-bar last-m" style="width:${Math.max(lastPct,8)}%">${lastCount}天</div></div></div>
+                <div class="compare-summary">${nowMonthLabel} ${thisCount}天 vs ${lastMonthLabel} ${lastCount}天 · <span class="${changeCls}">${change>=0?'↑':'↓'} ${Math.abs(change)}%</span></div>`;
+            document.getElementById('compareWrap').innerHTML=html;
+        }
+
+        // ==================== Share Card ====================
+        function generateShareCard(){
+            const habit=activeHabit();if(!habit)return;
+            const streak=calcStreakFrom(habit.checkins);
+            const total=Object.keys(habit.checkins).length;
+            const best=habit.bestStreak||0;
+            const canvas=document.createElement('canvas');canvas.width=500;canvas.height=700;
+            const ctx=canvas.getContext('2d');
+            const isDark=document.body.classList.contains('theme-dark');
+            // Background gradient
+            const grad=ctx.createLinearGradient(0,0,500,700);
+            grad.addColorStop(0,isDark?'#1a1040':'#e8e0ff');
+            grad.addColorStop(1,isDark?'#0a0a20':'#f5f0ff');
+            ctx.fillStyle=grad;ctx.fillRect(0,0,500,700);
+            // Accent circles
+            ctx.globalAlpha=0.1;
+            ctx.fillStyle=habit.color||'#7c6ff7';
+            ctx.beginPath();ctx.arc(400,100,200,0,Math.PI*2);ctx.fill();
+            ctx.beginPath();ctx.arc(100,550,150,0,Math.PI*2);ctx.fill();
+            ctx.globalAlpha=1;
+            // Top accent bar
+            ctx.fillStyle=habit.color||'#7c6ff7';ctx.fillRect(0,0,500,4);
+            // Icon + Name
+            ctx.font='40px sans-serif';ctx.textAlign='center';ctx.fillText(habit.icon||'💪',250,90);
+            ctx.font='bold 22px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle=isDark?'#e8e8f0':'#1a1a30';ctx.fillText(habit.name||'自律打卡',250,130);
+            // Streak
+            ctx.font='bold 120px -apple-system,sans-serif';ctx.fillStyle=isDark?'#ffffff':'#1a1a30';ctx.fillText(String(streak),250,260);
+            ctx.font='16px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle=isDark?'#a0a0b8':'#555570';ctx.fillText('连续打卡天数',250,290);
+            // Stats
+            const stats=[{l:'累计天数',v:total},{l:'最佳记录',v:best}];
+            stats.forEach((s,i)=>{
+                const x=160+i*180,y=350;
+                ctx.font='bold 36px -apple-system,sans-serif';ctx.fillStyle=isDark?'#e8e8f0':'#1a1a30';ctx.textAlign='center';ctx.fillText(String(s.v),x,y);
+                ctx.font='13px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle=isDark?'#a0a0b8':'#555570';ctx.fillText(s.l,x,y+28);
+            });
+            // Divider
+            ctx.strokeStyle=isDark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.08)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(60,420);ctx.lineTo(440,420);ctx.stroke();
+            // Quote
+            const quote=document.getElementById('quoteText').textContent||'自律即自由';
+            ctx.font='16px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle=isDark?'#a0a0b8':'#555570';ctx.textAlign='center';ctx.fillText(quote,250,470);
+            // Date
+            const nowStr=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
+            ctx.font='12px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle=isDark?'#6b6b85':'#999aac';ctx.fillText('生成于 '+nowStr,250,520);
+            // Bottom bar
+            ctx.fillStyle=habit.color||'#7c6ff7';ctx.fillRect(0,696,500,4);
+            // Footer
+            ctx.font='11px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillStyle=isDark?'#6b6b85':'#999aac';ctx.fillText('自律打卡 · 坚持每一天',250,580);
+
+            canvas.toBlob(blob=>{
+                const url=URL.createObjectURL(blob);
+                const a=document.createElement('a');a.href=url;a.download='打卡分享_'+streak+'天.png';
+                document.body.appendChild(a);a.click();document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('📤 分享卡片已下载！');
+            },'image/png');
+        }
+
+        // ==================== Year Report ====================
+        function showYearReport(){
+            const checkins=activeCheckins(),year=calendarYear;
+            const yearKeys=Object.keys(checkins).filter(k=>k.startsWith(String(year)));
+            const total=yearKeys.length;
+            // Best streak within year
+            let yearBest=0,curr=0;
+            const today=new Date(),todayStart=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+            const yearStart=new Date(year,0,1);
+            // Count monthly
+            const monthly=new Array(12).fill(0);
+            for(const k of yearKeys){
+                const m=parseInt(k.split('-')[1])-1;
+                if(m>=0&&m<12)monthly[m]++;
+            }
+            // Best streak for year
+            let run=0;
+            for(let d=new Date(yearStart);d<=todayStart;d.setDate(d.getDate()+1)){
+                const k=dateKey(d.getFullYear(),d.getMonth()+1,d.getDate());
+                if(checkins[k]){run++;yearBest=Math.max(yearBest,run);}else run=0;
+            }
+            const maxM=Math.max(1,...monthly);
+            document.getElementById('yearStats').innerHTML=`
+                <div class="year-stat"><div class="ys-val">${total}</div><div class="ys-lbl">年度打卡</div></div>
+                <div class="year-stat"><div class="ys-val">${yearBest}</div><div class="ys-lbl">年度最佳</div></div>
+                <div class="year-stat"><div class="ys-val">${Object.keys(activeCheckins()).length}</div><div class="ys-lbl">总计打卡</div></div>
+                <div class="year-stat"><div class="ys-val">${calcStreakFrom(activeCheckins())}</div><div class="ys-lbl">当前连续</div></div>`;
+            document.getElementById('yearMonths').innerHTML=monthly.map((c,i)=>{
+                const h=(c/maxM)*80;
+                return `<div class="ym-bar" style="height:${Math.max(h,2)}px" title="${year}年${i+1}月: ${c}天"><span class="ym-lbl">${i+1}月</span></div>`;
+            }).join('');
+            document.getElementById('yearReportModal').classList.add('active');
+        }
+        function hideYearReport(){document.getElementById('yearReportModal').classList.remove('active');}
+
+        // ==================== Token Modal ====================
+        function showTokenModal(){document.getElementById('tokenInput').value=getToken();document.getElementById('tokenModal').classList.add('active');}
+        function hideTokenModal(){document.getElementById('tokenModal').classList.remove('active');}
+        function saveToken(){
+            const val=document.getElementById('tokenInput').value.trim();
+            if(!val||!val.startsWith('ghp_')){showToast('Token 格式不正确，应以 ghp_ 开头');return;}
+            localStorage.setItem(TOKEN_KEY,val);hideTokenModal();showToast('Token 已保存，正在同步…');
+            syncOnLoad().then(()=>{
+                const badge=document.getElementById('syncBadge');
+                showToast(badge.classList.contains('synced')?'✅ 同步成功！':'同步失败，请检查 Token 权限');
+            });
+        }
+
+        // ==================== Event Bindings ====================
+        document.getElementById('resetModal').addEventListener('click',function(e){if(e.target===this)hideResetModal();});
+        document.getElementById('tokenModal').addEventListener('click',function(e){if(e.target===this)hideTokenModal();});
+        document.getElementById('habitModal').addEventListener('click',function(e){if(e.target===this)hideHabitModal();});
+        document.getElementById('yearReportModal').addEventListener('click',function(e){if(e.target===this)hideYearReport();});
+        document.addEventListener('keydown',function(e){if(e.key==='Escape'){hideResetModal();hideTokenModal();hideHabitModal();hideYearReport();}});
+
+        // ==================== Init ====================
+        function init(){
+            data=loadLocalData();
+            renderHabitTabs();
+            updateUI();
+            syncOnLoad().then(()=>updateUI());
+        }
+        init();
     </script>
 </body>
 </html>
